@@ -11,6 +11,7 @@ Delia Itzel López Dueñas A00821792
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+#include <unistd.h>
 using namespace cv;
 using namespace std;
 
@@ -20,7 +21,62 @@ VideoCapture camera;
 Mat currentImage;
 Mat grayImage;
 Mat binaryImage;
+Mat hist;
 
+//Histograma RGB en tiempo real 
+void histogram(const Mat &original, Mat &histImage){
+    Mat src, dst;
+    src = original;
+    histImage = Mat(0, 0, 0, Scalar( 0,0,0));
+   
+             /// Separar imágen en RGB
+  vector<Mat> bgr_planes;
+  split( src, bgr_planes );
+
+              /// Número de bins (256) y rango de 0 a 256
+  int histSize = 256;
+  float range[] = { 0, 256 } ;
+  const float* histRange = { range };
+
+  bool uniform = true; bool accumulate = false;
+
+  Mat b_hist, g_hist, r_hist;
+
+              /// Crear histogramas
+  calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate );
+  calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate );
+  calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate );
+
+              // graficar histograma R G y B
+  int hist_w = 512; int hist_h = 400;
+  int bin_w = cvRound( (double) hist_w/histSize );
+
+  //Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
+  if(histImage.empty())
+        histImage = Mat(hist_h, hist_w, CV_8UC3, Scalar( 0,0,0));
+  
+             /// Normalizar a  [ 0, histImage.rows ]
+  normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+  normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+  normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+
+             /// Graficaar cada channel
+  for( int i = 1; i < histSize; i++ )
+  {
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+                       Scalar( 255, 0, 0), 2, 8, 0  );
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+                       Scalar( 0, 255, 0), 2, 8, 0  );
+      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ) ,
+                       Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+                       Scalar( 0, 0, 255), 2, 8, 0  );
+  }
+
+  usleep(1);
+
+}
 
 //Cambia una imágen a escala de grises
 void rgbToBW(const Mat &original, Mat &gray){
@@ -108,6 +164,11 @@ int main(int argc, char *argv[]){
                     rgbToBW(currentImage,grayImage);
                     imshow("Grayscale",grayImage);
                     break;
+                case 'd':
+                    histogram(currentImage,hist);
+                    imshow("Camera", currentImage);                    
+                    imshow("Histogram",hist);
+                    break;                
                 case 'c':
                     rgbToBW(currentImage,grayImage);
                     binarize(grayImage,binaryImage,thresh);
@@ -129,7 +190,7 @@ int main(int argc, char *argv[]){
                     destroyAllWindows();
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\n";
+                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)Histogram\n";
                     cin>>sel;
                     if(sel == 'c'){
                         printf("\033[2J");
