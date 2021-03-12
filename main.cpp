@@ -18,10 +18,7 @@ using namespace std;
 
 vector<Point> points;
 VideoCapture camera;
-Mat currentImage;
-Mat grayImage;
-Mat binaryImage;
-Mat hist;
+Mat currentImage,grayImage,binaryImage,hist,yiqImage,hsvImage;
 
 //Histograma RGB en tiempo real 
 void histogram(const Mat &original, Mat &histImage){
@@ -87,6 +84,10 @@ void rgbToBW(const Mat &original, Mat &gray){
         for(int x=0; x<original.cols;x++){
             sum+=((int)original.at<Vec3b>(y,x)[0]+(int)original.at<Vec3b>(y,x)[2]+(int)original.at<Vec3b>(y,x)[2]);
             sum/=3; 
+            if(sum>255)
+                sum=255;
+            if(sum<0)
+                sum = 0;
             for(int i = 0; i<original.channels();i++){
                 gray.at<Vec3b>(y,x)[i] = (unsigned char)sum;
             }
@@ -100,18 +101,24 @@ void binarize(const Mat &original, Mat &bin,int thresh){
 }
 
 //Obtiene los valores de YIQ de un pixel RGB
-vector<float> yiq(int R, int G, int B){
-    vector<float> yiq;
-    yiq.push_back((0.299*R+0.587*G+0.114*B)/255);
-    yiq.push_back((0.596*R-0.275*G-0.321*B)/255);
-    yiq.push_back((0.212*R-0.523*G+0.311*B)/255);
+vector<int> yiq(int R, int G, int B){
+    vector<int> yiq;
+    yiq.push_back((0.299*R+0.587*G+0.114*B));
+    yiq.push_back((0.596*R-0.275*G-0.321*B+255)/2);
+    yiq.push_back((0.212*R-0.523*G+0.311*B+255)/2);
     return yiq;   
+}
+
+void hsv(const Mat &original, Mat &destination){
+  cvtColor(original,destination,COLOR_RGB2HSV);
 }
 
 //Función de reacción al click en la imagen
 void mouseClicked(int event, int x, int y, int flags, void* param){
+    hsv(currentImage,hsvImage);
     Vec3b pix = currentImage.at<Vec3b>(y,x);
-    vector<float> yiq_vec = yiq((int)pix[2],(int)pix[1],(int)pix[0]);
+    Vec3b hsvPix = hsvImage.at<Vec3b>(y,x);
+    vector<int> yiq_vec = yiq((int)pix[2],(int)pix[1],(int)pix[0]);
     switch (event)
     {
         case EVENT_LBUTTONDOWN:
@@ -120,6 +127,7 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
             cout << "X: " << x << " Y: "<< y <<endl;
             cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
             cout << "Y: " << yiq_vec[0] << " I: " << yiq_vec[1]<< " Q: " << yiq_vec[2]<<endl;
+            cout << "H: " << (int)hsvPix[2] << " S: " << (int)hsvPix[1]<< " V: " << (int)hsvPix[0]<<endl;
             break;
         case EVENT_MOUSEMOVE:
             break;
@@ -129,24 +137,22 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
 }
 
 //Función para crear la imagen en fomrato YIQ (Work in progress)
-/*void makeYIQ(Mat &original){
-    Mat YIQIBOI = original.clone();
-    Vec3b pix;
-    vector<float> yiq_vec;
-    for(int j = 0; j<currentImage.cols;j++){
-        for(int i = 0; i<currentImage.rows;i++){
-            pix = currentImage.at<Vec3b>(j,i);
-            yiq_vec= yiq((int)pix[2],(int)pix[1],(int)pix[0]);
-            YIQIBOI.at<Vec3f>(i,j) = {yiq_vec[0],yiq_vec[1],yiq_vec[2]};
+void makeYIQ(const Mat &original, Mat &destination){
+    if(destination.empty())
+        destination = Mat(original.rows, original.cols, original.type());
+    vector<int> yiq_vec;
+    for(int y=0; y <original.rows; y++){
+        for(int x=0; x<original.cols;x++){
+          yiq_vec= yiq((int)original.at<Vec3b>(y,x)[2],(int)original.at<Vec3b>(y,x)[1],(int)original.at<Vec3b>(y,x)[0]);
+          for(int i = 0; i<original.channels();i++){
+            destination.at<Vec3b>(y,x)[i] = yiq_vec[i];
+          }
         }
     }
-    imshow("YIQ",YIQIBOI);
-}*/
+}
 
 int main(int argc, char *argv[]){
     camera.open(0);
-    namedWindow("Camera");
-    setMouseCallback("Camera", mouseClicked);
     int thresh = 0;
     char sel = 'a';
     bool clicked = false, run = true;
@@ -158,26 +164,46 @@ int main(int argc, char *argv[]){
         {
             switch(sel){
                 case 'a':
+                    namedWindow("Camera");
+                    setMouseCallback("Camera", mouseClicked);
                     imshow("Camera", currentImage);
                     break;
                 case 'b':
+                    namedWindow("Grayscale");
+                    setMouseCallback("Grayscale", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     imshow("Grayscale",grayImage);
-                    break;
-                case 'd':
-                    histogram(currentImage,hist);
-                    imshow("Camera", currentImage);                    
-                    imshow("Histogram",hist);
-                    break;                
+                    break;              
                 case 'c':
+                    namedWindow("Binarized");
+                    setMouseCallback("Binarized", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     binarize(grayImage,binaryImage,thresh);
                     imshow("Binarized",binaryImage);
                 break;
+                case 'd':
+                    namedWindow("Camera");
+                    setMouseCallback("Camera", mouseClicked);
+                    histogram(currentImage,hist);
+                    imshow("Camera", currentImage);                    
+                    imshow("Histogram",hist);
+                    break;  
+                case 'e':
+                    namedWindow("YIQ");
+                    setMouseCallback("YIQ", mouseClicked);
+                    makeYIQ(currentImage,yiqImage);
+                    imshow("YIQ",yiqImage);
+                break;
+                case 'f':
+                    namedWindow("HSV");
+                    setMouseCallback("HSV", mouseClicked);
+                    hsv(currentImage,hsvImage);
+                    imshow("HSV",hsvImage);
+                break;
                 default:
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Incorrect image, please try again.";
+                    cout<<"Incorrect image, please try again.\n";
                     run = false;
                 break;
             }
@@ -190,7 +216,7 @@ int main(int argc, char *argv[]){
                     destroyAllWindows();
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)Histogram\n";
+                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)Histogram\ne)YIQ\nf)HSV\n";
                     cin>>sel;
                     if(sel == 'c'){
                         printf("\033[2J");
