@@ -12,19 +12,106 @@ Delia Itzel López Dueñas A00821792
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 #include <unistd.h>
+#include <bits/stdc++.h>
 using namespace cv;
 using namespace std;
 
 
 vector<Point> points;
+vector<int> muestraR,muestraG,muestraB ;
 VideoCapture camera;
-Mat currentImage,grayImage,binaryImage,hist,yiqImage,hsvImage;
+Mat currentImage,grayImage,binaryImage,histR,histG,histB,yiqImage,hsvImage,NewImage;
+int minR,maxR,minG,maxG,minB,maxB;
+bool ready = false;
+
+//Separar objeto   EN PROCESO 
+void separar(const Mat &original, Mat &edit){
+  Mat mask;
+  
+   inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),mask);
+   
+   original.copyTo(edit,mask);
+   
+  // namedWindow("Final");                 
+   //imshow("Final", edit); 
+   
+ 
+  //threshold(original,mask,(minB,minG,minR),255,3);
+  //threshold(mask,edit,(maxB,maxG,maxR),255,4);
+
+
+}
+
+//Muestreo de imagen 
+void muestreo(int event, int x, int y, int flags, void* param){
+    
+    Vec3b pix = currentImage.at<Vec3b>(y,x);
+    // falta borrar el vector muestra para hacer el siguiente objeto y dejarlo con cero elementos 
+   
+   
+     switch (event)
+     {
+        
+        case EVENT_LBUTTONDOWN:
+          if (muestraR.size() < 10 ) {   
+            //printf("\033[2J");
+            //printf("\033[%d;%dH", 0, 0);
+            cout << "X: " << x << " Y: "<< y <<endl;
+            cout << "R: " << (int)pix[2] << " G: " 
+            << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
+            
+            muestraR.push_back((int)pix[2]);   
+            muestraG.push_back((int)pix[1]); 
+            muestraB.push_back((int)pix[0]); 
+                    
+            cout << muestraR[muestraR.size()-1] << endl;        
+            cout << muestraG[muestraG.size()-1] << endl;           
+            cout << muestraB[muestraB.size()-1] << endl; 
+            
+            cout << muestraR.size() <<endl;
+             //break;            
+           }
+        
+        else{
+           minR= *min_element(muestraR.begin(), muestraR.end()); 
+           maxR= *max_element(muestraR.begin(), muestraR.end());
+           minG= *min_element(muestraG.begin(), muestraG.end()); 
+           maxG= *max_element(muestraG.begin(), muestraG.end());
+           minB= *min_element(muestraB.begin(), muestraB.end()); 
+           maxB= *max_element(muestraB.begin(), muestraB.end());
+           // solo probando que fuincione el min y max 
+           //cout<< "\nMin Element = "<< minR <<endl;
+           //cout << "\nMax Element = "<< maxR <<endl;
+           
+           ready= true;        
+            //  break;
+           }
+           
+           break;
+        case EVENT_MOUSEMOVE:
+            break;
+        case EVENT_LBUTTONUP:
+            break;
+       
+      }
+    
+    
+}
+
+
+
+
+
+
+
 
 //Histograma RGB en tiempo real 
-void histogram(const Mat &original, Mat &histImage){
+void histogram(const Mat &original, Mat &histImageR, Mat &histImageG, Mat &histImageB){
     Mat src, dst;
     src = original;
-    histImage = Mat(0, 0, 0, Scalar( 0,0,0));
+    histImageR = Mat(0, 0, 0, Scalar( 0,0,0));
+    histImageG = Mat(0, 0, 0, Scalar( 0,0,0));
+    histImageB = Mat(0, 0, 0, Scalar( 0,0,0));
    
              /// Separar imágen en RGB
   vector<Mat> bgr_planes;
@@ -49,27 +136,34 @@ void histogram(const Mat &original, Mat &histImage){
   int bin_w = cvRound( (double) hist_w/histSize );
 
   //Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
-  if(histImage.empty())
-        histImage = Mat(hist_h, hist_w, CV_8UC3, Scalar( 0,0,0));
+  if(histImageR.empty())
+        histImageR = Mat(hist_h, hist_w, CV_8UC3, Scalar( 0,0,0));
+  if(histImageG.empty())
+        histImageG = Mat(hist_h, hist_w, CV_8UC3, Scalar( 0,0,0));
+  if(histImageB.empty())
+        histImageB = Mat(hist_h, hist_w, CV_8UC3, Scalar( 0,0,0));
+        
   
              /// Normalizar a  [ 0, histImage.rows ]
-  normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-  normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-  normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+  normalize(b_hist, b_hist, 0, histImageB.rows, NORM_MINMAX, -1, Mat() );
+  normalize(g_hist, g_hist, 0, histImageG.rows, NORM_MINMAX, -1, Mat() );
+  normalize(r_hist, r_hist, 0, histImageR.rows, NORM_MINMAX, -1, Mat() );
 
              /// Graficaar cada channel
   for( int i = 1; i < histSize; i++ )
   {
-      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ) ,
+      line( histImageB, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ) ,
                        Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
                        Scalar( 255, 0, 0), 2, 8, 0  );
-      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ) ,
+      line( histImageG, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ) ,
                        Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
                        Scalar( 0, 255, 0), 2, 8, 0  );
-      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ) ,
+      line( histImageR, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ) ,
                        Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
                        Scalar( 0, 0, 255), 2, 8, 0  );
   }
+  
+  
 
   usleep(1);
 
@@ -158,6 +252,7 @@ int main(int argc, char *argv[]){
     bool clicked = false, run = true;
     while (run)
     {   
+        
         if(!clicked)
             camera >> currentImage;
         if (currentImage.data) 
@@ -167,7 +262,7 @@ int main(int argc, char *argv[]){
                     namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
                     imshow("Camera", currentImage);
-                    break;
+                    break;                                
                 case 'b':
                     namedWindow("Grayscale");
                     setMouseCallback("Grayscale", mouseClicked);
@@ -182,11 +277,13 @@ int main(int argc, char *argv[]){
                     imshow("Binarized",binaryImage);
                 break;
                 case 'd':
-                    namedWindow("Camera");
+                    //namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
-                    histogram(currentImage,hist);
-                    imshow("Camera", currentImage);                    
-                    imshow("Histogram",hist);
+                    histogram(currentImage,histR,histG,histB);
+                    //imshow("Camera", currentImage); // solo puedo ver 3 ventanas al mismo tiempo                   
+                    imshow("Histogram R",histR);
+                    imshow("Histogram G",histG);
+                    imshow("Histogram B",histB);  
                     break;  
                 case 'e':
                     namedWindow("YIQ");
@@ -200,6 +297,18 @@ int main(int argc, char *argv[]){
                     hsv(currentImage,hsvImage);
                     imshow("HSV",hsvImage);
                 break;
+                case 'g':
+                    if (ready == false){
+                    namedWindow("Camera");
+                    setMouseCallback("Camera", muestreo);
+                    imshow("Camera", currentImage);                   
+                    }
+                    else{
+                    namedWindow("Final");                    
+                    separar(currentImage, NewImage);
+                    imshow("Final", NewImage);                     
+                    }
+                    break;
                 default:
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
@@ -216,7 +325,7 @@ int main(int argc, char *argv[]){
                     destroyAllWindows();
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)Histogram\ne)YIQ\nf)HSV\n";
+                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)Histogram\ne)YIQ\nf)HSV\ng)Contraste\n";
                     cin>>sel;
                     if(sel == 'c'){
                         printf("\033[2J");
