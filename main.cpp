@@ -25,20 +25,13 @@ int minR,maxR,minG,maxG,minB,maxB,val1=-1,val2=-1,val3=-1;
 char sel = 'a';
 
 bool ready = false;
-//Separar objeto   EN PROCESO 
+//Separar objeto    
 void separar(const Mat &original, Mat &edit){
   Mat mask;
   edit = Mat(0, 0, 0, Scalar( 0,0,0));
   inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),mask);
    
   original.copyTo(edit,mask);
-   
-  // namedWindow("Final");                 
-   //imshow("Final", edit); 
-   
- 
-  //threshold(original,mask,(minB,minG,minR),255,3);
-  //threshold(mask,edit,(maxB,maxG,maxR),255,4);
 
 
 }
@@ -83,9 +76,11 @@ void muestreo(int event, int x, int y, int flags, void* param){
            // solo probando que fuincione el min y max 
            //cout<< "\nMin Element = "<< minR <<endl;
            //cout << "\nMax Element = "<< maxR <<endl;
-           
+           muestraR.clear();
+           muestraG.clear();
+           muestraB.clear();
            ready= true;        
-            //  break;
+            
            }
            
            break;
@@ -364,10 +359,7 @@ int main(int argc, char *argv[]){
                     printf("\033[%d;%dH", 0, 0);
                     cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)RGB\ne)YIQ\nf)HSV\ng)Contraste\n";
                     cin>>sel;
-                    ready = false;
-                    muestraR.clear();
-                    muestraG.clear();
-                    muestraB.clear();
+                    ready = false;                    
                     break;
                 case 'x':
                     run = false;
