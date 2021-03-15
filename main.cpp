@@ -21,16 +21,17 @@ vector<Point> points;
 vector<int> muestraR,muestraG,muestraB ;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,histR,histG,histB,yiqImage,hsvImage,NewImage;
-int minR,maxR,minG,maxG,minB,maxB;
-bool ready = false;
+int minR,maxR,minG,maxG,minB,maxB,val1=-1,val2=-1,val3=-1;
+char sel = 'a';
 
+bool ready = false;
 //Separar objeto   EN PROCESO 
 void separar(const Mat &original, Mat &edit){
   Mat mask;
-  
-   inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),mask);
+  edit = Mat(0, 0, 0, Scalar( 0,0,0));
+  inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),mask);
    
-   original.copyTo(edit,mask);
+  original.copyTo(edit,mask);
    
   // namedWindow("Final");                 
    //imshow("Final", edit); 
@@ -98,24 +99,15 @@ void muestreo(int event, int x, int y, int flags, void* param){
     
 }
 
-
-
-
-
-
-
-
 //Histograma RGB en tiempo real 
-void histogram(const Mat &original, Mat &histImageR, Mat &histImageG, Mat &histImageB){
-    Mat src, dst;
-    src = original;
+void histogram(const Mat &original, Mat &histImageR, Mat &histImageG, Mat &histImageB, int v1, int v2, int v3){
     histImageR = Mat(0, 0, 0, Scalar( 0,0,0));
     histImageG = Mat(0, 0, 0, Scalar( 0,0,0));
     histImageB = Mat(0, 0, 0, Scalar( 0,0,0));
    
              /// Separar imágen en RGB
   vector<Mat> bgr_planes;
-  split( src, bgr_planes );
+  split( original, bgr_planes );
 
               /// Número de bins (256) y rango de 0 a 256
   int histSize = 256;
@@ -163,7 +155,11 @@ void histogram(const Mat &original, Mat &histImageR, Mat &histImageG, Mat &histI
                        Scalar( 0, 0, 255), 2, 8, 0  );
   }
   
-  
+  if(val1!=-1){
+      line(histImageR,Point(v1*512/255,0),Point(v1*512/255,400),Scalar(255,255,255),1,LINE_4,0);
+      line(histImageG,Point(v2*512/255,0),Point(v2*512/255,400),Scalar(255,255,255),1,LINE_4,0);
+      line(histImageB,Point(v3*512/255,0),Point(v3*512/255,400),Scalar(255,255,255),1,LINE_4,0);
+  }
 
   usleep(1);
 
@@ -222,6 +218,23 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
             cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
             cout << "Y: " << yiq_vec[0] << " I: " << yiq_vec[1]<< " Q: " << yiq_vec[2]<<endl;
             cout << "H: " << (int)hsvPix[2] << " S: " << (int)hsvPix[1]<< " V: " << (int)hsvPix[0]<<endl;
+            switch(sel){
+              case 'd':
+                val1 = (int)pix[2];
+                val2 = (int)pix[1];
+                val3 = (int)pix[0];
+              break;
+              case 'e':
+                val1 = yiq_vec[2];
+                val2 = yiq_vec[1];
+                val3 = yiq_vec[0];
+              break;
+              case 'f':
+                val1 = (int)hsvPix[2];
+                val2 = (int)hsvPix[1];
+                val3 = (int)hsvPix[0];
+              break;
+            }
             break;
         case EVENT_MOUSEMOVE:
             break;
@@ -230,7 +243,7 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
     }
 }
 
-//Función para crear la imagen en fomrato YIQ (Work in progress)
+//Función para crear la imagen en fomrato YIQ
 void makeYIQ(const Mat &original, Mat &destination){
     if(destination.empty())
         destination = Mat(original.rows, original.cols, original.type());
@@ -245,10 +258,14 @@ void makeYIQ(const Mat &original, Mat &destination){
     }
 }
 
+
+void onTrackbar(int, void*){
+  //Función vacía para los trackbars
+}
+
 int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
-    char sel = 'a';
     bool clicked = false, run = true;
     while (run)
     {   
@@ -261,7 +278,7 @@ int main(int argc, char *argv[]){
                 case 'a':
                     namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
-                    imshow("Camera", currentImage);
+                    imshow("Camera", currentImage); 
                     break;                                
                 case 'b':
                     namedWindow("Grayscale");
@@ -274,13 +291,14 @@ int main(int argc, char *argv[]){
                     setMouseCallback("Binarized", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     binarize(grayImage,binaryImage,thresh);
+                    createTrackbar("Threshold","Binarized",&thresh,255,onTrackbar);
                     imshow("Binarized",binaryImage);
                 break;
                 case 'd':
-                    //namedWindow("Camera");
+                    namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
-                    histogram(currentImage,histR,histG,histB);
-                    //imshow("Camera", currentImage); // solo puedo ver 3 ventanas al mismo tiempo                   
+                    histogram(currentImage,histR,histG,histB,val1,val2,val3);
+                    imshow("Camera", currentImage);                    
                     imshow("Histogram R",histR);
                     imshow("Histogram G",histG);
                     imshow("Histogram B",histB);  
@@ -289,26 +307,42 @@ int main(int argc, char *argv[]){
                     namedWindow("YIQ");
                     setMouseCallback("YIQ", mouseClicked);
                     makeYIQ(currentImage,yiqImage);
+                    histogram(yiqImage,histR,histG,histB,val1,val2,val3);
                     imshow("YIQ",yiqImage);
+                    imshow("Histogram Q",histR);
+                    imshow("Histogram I",histG);
+                    imshow("Histogram Y",histB);  
                 break;
                 case 'f':
                     namedWindow("HSV");
                     setMouseCallback("HSV", mouseClicked);
                     hsv(currentImage,hsvImage);
+                    histogram(hsvImage,histR,histG,histB,val1,val2,val3);
                     imshow("HSV",hsvImage);
+                    imshow("Histogram H",histR);
+                    imshow("Histogram S",histG);
+                    imshow("Histogram V",histB);
                 break;
                 case 'g':
-                    if (ready == false){
-                    namedWindow("Camera");
-                    setMouseCallback("Camera", muestreo);
-                    imshow("Camera", currentImage);                   
+                    if (!ready){
+                      namedWindow("Camera");
+                      setMouseCallback("Camera", muestreo);
+                      imshow("Camera", currentImage);                   
+                    }else{
+                      namedWindow("Camera");
+                      setMouseCallback("Camera", muestreo);
+                      namedWindow("Final");                    
+                      separar(currentImage, NewImage);
+                      createTrackbar("Rmin","Final",&minR,255,onTrackbar);
+                      createTrackbar("Rmax","Final",&maxR,255,onTrackbar);
+                      createTrackbar("Gmin","Final",&minG,255,onTrackbar);
+                      createTrackbar("Gmax","Final",&maxG,255,onTrackbar);
+                      createTrackbar("Bmin","Final",&minB,255,onTrackbar);
+                      createTrackbar("Bmax","Final",&maxB,255,onTrackbar);
+                      imshow("Final", NewImage);
+                      imshow("Camera", currentImage);                     
                     }
-                    else{
-                    namedWindow("Final");                    
-                    separar(currentImage, NewImage);
-                    imshow("Final", NewImage);                     
-                    }
-                    break;
+                break;
                 default:
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
@@ -323,16 +357,17 @@ int main(int argc, char *argv[]){
                     break;
                 case 's':
                     destroyAllWindows();
+                    val1=-1;
+                    val2=-1;
+                    val3=-1;
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)Histogram\ne)YIQ\nf)HSV\ng)Contraste\n";
+                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)RGB\ne)YIQ\nf)HSV\ng)Contraste\n";
                     cin>>sel;
-                    if(sel == 'c'){
-                        printf("\033[2J");
-                        printf("\033[%d;%dH", 0, 0);
-                        cout<<"Threshold: ";
-                        cin>>thresh;
-                    }
+                    ready = false;
+                    muestraR.clear();
+                    muestraG.clear();
+                    muestraB.clear();
                     break;
                 case 'x':
                     run = false;
