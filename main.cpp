@@ -19,66 +19,142 @@ using namespace std;
 
 vector<Point> points;
 vector<int> muestraR,muestraG,muestraB ;
+vector<int> muestraH,muestraS,muestraV ;
+vector<int> muestraY,muestraI,muestraQ ;
 VideoCapture camera;
-Mat currentImage,grayImage,binaryImage,histR,histG,histB,yiqImage,hsvImage,NewImage;
+Mat currentImage,grayImage,binaryImage,hsvImage,yiqImage;
+Mat histR,histG,histB, histY,histI,histQ, histH,histS,histV;
+Mat NewImageYIQ,NewImageRGB,NewImageHSV;
 int minR,maxR,minG,maxG,minB,maxB,val1=-1,val2=-1,val3=-1;
+int minY,maxI,minQ,maxY,minI,maxQ;
+int minH,maxS,minV,maxH,minS,maxV;
 char sel = 'a';
-
 bool ready = false;
-//Separar objeto    
-void separar(const Mat &original, Mat &edit){
-  Mat mask;
-  edit = Mat(0, 0, 0, Scalar( 0,0,0));
-  inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),mask);
-   
-  original.copyTo(edit,mask);
 
-
+//Obtiene los valores de YIQ de un pixel RGB
+vector<int> yiq(int R, int G, int B){
+    vector<int> yiq;
+    yiq.push_back((0.299*R+0.587*G+0.114*B));
+    yiq.push_back((0.596*R-0.275*G-0.321*B+255)/2);
+    yiq.push_back((0.212*R-0.523*G+0.311*B+255)/2);
+    return yiq;   
 }
+
+void hsv(const Mat &original, Mat &destination){
+  cvtColor(original,destination,COLOR_RGB2HSV);
+}
+
+//Separar objeto    
+void separar(const Mat &original, Mat &editRGB, Mat &editYIQ,Mat &editHSV){
+  Mat maskRGB, maskYIQ, maskHSV;
+  //Reset image
+  editRGB = Mat(0, 0, 0, Scalar( 0,0,0));
+  editYIQ = Mat(0, 0, 0, Scalar( 0,0,0));
+  editHSV = Mat(0, 0, 0, Scalar( 0,0,0));
+  
+  //Filtro y máscara
+  inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),maskRGB);     
+  original.copyTo(editRGB,maskRGB);
+  
+  inRange(original, Scalar(minY,minI,minQ), Scalar(maxY,maxI,maxQ),maskYIQ);     
+  original.copyTo(editYIQ,maskYIQ);
+  
+  inRange(original, Scalar(minV,minS,minH), Scalar(maxV,maxS,maxH),maskHSV);     
+  original.copyTo(editHSV,maskHSV);
+}
+
 
 //Muestreo de imagen 
 void muestreo(int event, int x, int y, int flags, void* param){
-    
-    Vec3b pix = currentImage.at<Vec3b>(y,x);
-    // falta borrar el vector muestra para hacer el siguiente objeto y dejarlo con cero elementos 
-   
-   
+    hsv(currentImage,hsvImage);
+    Vec3b pix = currentImage.at<Vec3b>(y,x);  
+    Vec3b hsvPix = hsvImage.at<Vec3b>(y,x);
+    vector<int> yiq_vec = yiq((int)pix[2],(int)pix[1],(int)pix[0]); 
      switch (event)
      {
         
         case EVENT_LBUTTONDOWN:
           if (muestraR.size() < 10 ) {   
-            //printf("\033[2J");
-            //printf("\033[%d;%dH", 0, 0);
+            printf("\033[2J");
+            printf("\033[%d;%dH", 0, 0);
             cout << "X: " << x << " Y: "<< y <<endl;
             cout << "R: " << (int)pix[2] << " G: " 
             << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
+            cout << "Y: " << yiq_vec[0] << " I: " << yiq_vec[1]<< " Q: " << yiq_vec[2]<<endl;
+            cout << "H: " << (int)hsvPix[2] << " S: " << (int)hsvPix[1]<< " V: " << (int)hsvPix[0]<<endl;
             
+            //crear vectores 
             muestraR.push_back((int)pix[2]);   
             muestraG.push_back((int)pix[1]); 
             muestraB.push_back((int)pix[0]); 
-                    
+            
+            muestraY.push_back(yiq_vec[0]);   
+            muestraI.push_back(yiq_vec[1]); 
+            muestraQ.push_back(yiq_vec[2]); 
+            
+            muestraH.push_back((int)hsvPix[2]);   
+            muestraS.push_back((int)hsvPix[1]); 
+            muestraV.push_back((int)hsvPix[0]); 
+            
+            //mostrar valores recolectados
             cout << muestraR[muestraR.size()-1] << endl;        
             cout << muestraG[muestraG.size()-1] << endl;           
             cout << muestraB[muestraB.size()-1] << endl; 
             
-            cout << muestraR.size() <<endl;
-             //break;            
+            cout << muestraY[muestraY.size()-1] << endl;        
+            cout << muestraI[muestraI.size()-1] << endl;           
+            cout << muestraQ[muestraQ.size()-1] << endl;
+            
+            cout << muestraH[muestraH.size()-1] << endl;        
+            cout << muestraS[muestraS.size()-1] << endl;           
+            cout << muestraV[muestraV.size()-1] << endl;
+            
+            //Mostrar número de muestras
+            cout << muestraR.size() <<endl;                        
            }
         
         else{
+           
+           //valores Máximos y Mínimos
            minR= *min_element(muestraR.begin(), muestraR.end()); 
            maxR= *max_element(muestraR.begin(), muestraR.end());
            minG= *min_element(muestraG.begin(), muestraG.end()); 
            maxG= *max_element(muestraG.begin(), muestraG.end());
            minB= *min_element(muestraB.begin(), muestraB.end()); 
            maxB= *max_element(muestraB.begin(), muestraB.end());
+           
+           minY= *min_element(muestraY.begin(), muestraY.end()); 
+           maxY= *max_element(muestraY.begin(), muestraY.end());
+           minI= *min_element(muestraI.begin(), muestraI.end()); 
+           maxI= *max_element(muestraI.begin(), muestraI.end());
+           minQ= *min_element(muestraQ.begin(), muestraQ.end()); 
+           maxQ= *max_element(muestraQ.begin(), muestraQ.end());
+           
+           minH= *min_element(muestraH.begin(), muestraH.end()); 
+           maxH= *max_element(muestraH.begin(), muestraH.end());
+           minS= *min_element(muestraS.begin(), muestraS.end()); 
+           maxS= *max_element(muestraS.begin(), muestraS.end());
+           minV= *min_element(muestraV.begin(), muestraV.end()); 
+           maxV= *max_element(muestraV.begin(), muestraV.end());
+           
+           
            // solo probando que fuincione el min y max 
            //cout<< "\nMin Element = "<< minR <<endl;
            //cout << "\nMax Element = "<< maxR <<endl;
+           
+           //Borrar vectores
            muestraR.clear();
            muestraG.clear();
            muestraB.clear();
+           
+           muestraY.clear();
+           muestraI.clear();
+           muestraQ.clear();
+           
+           muestraH.clear();
+           muestraS.clear();
+           muestraV.clear();
+           
            ready= true;        
             
            }
@@ -94,7 +170,7 @@ void muestreo(int event, int x, int y, int flags, void* param){
     
 }
 
-//Histograma RGB en tiempo real 
+//Histogramas en tiempo real 
 void histogram(const Mat &original, Mat &histImageR, Mat &histImageG, Mat &histImageB, int v1, int v2, int v3){
     histImageR = Mat(0, 0, 0, Scalar( 0,0,0));
     histImageG = Mat(0, 0, 0, Scalar( 0,0,0));
@@ -185,18 +261,9 @@ void binarize(const Mat &original, Mat &bin,int thresh){
     threshold(original,bin,thresh,255,THRESH_BINARY);
 }
 
-//Obtiene los valores de YIQ de un pixel RGB
-vector<int> yiq(int R, int G, int B){
-    vector<int> yiq;
-    yiq.push_back((0.299*R+0.587*G+0.114*B));
-    yiq.push_back((0.596*R-0.275*G-0.321*B+255)/2);
-    yiq.push_back((0.212*R-0.523*G+0.311*B+255)/2);
-    return yiq;   
-}
 
-void hsv(const Mat &original, Mat &destination){
-  cvtColor(original,destination,COLOR_RGB2HSV);
-}
+
+
 
 //Función de reacción al click en la imagen
 void mouseClicked(int event, int x, int y, int flags, void* param){
@@ -302,21 +369,21 @@ int main(int argc, char *argv[]){
                     namedWindow("YIQ");
                     setMouseCallback("YIQ", mouseClicked);
                     makeYIQ(currentImage,yiqImage);
-                    histogram(yiqImage,histR,histG,histB,val1,val2,val3);
+                    histogram(yiqImage,histQ,histI,histY,val1,val2,val3);
                     imshow("YIQ",yiqImage);
-                    imshow("Histogram Q",histR);
-                    imshow("Histogram I",histG);
-                    imshow("Histogram Y",histB);  
+                    imshow("Histogram Q",histQ);
+                    imshow("Histogram I",histI);
+                    imshow("Histogram Y",histY);  
                 break;
                 case 'f':
                     namedWindow("HSV");
                     setMouseCallback("HSV", mouseClicked);
                     hsv(currentImage,hsvImage);
-                    histogram(hsvImage,histR,histG,histB,val1,val2,val3);
+                    histogram(hsvImage,histH,histS,histV,val1,val2,val3);
                     imshow("HSV",hsvImage);
-                    imshow("Histogram H",histR);
-                    imshow("Histogram S",histG);
-                    imshow("Histogram V",histB);
+                    imshow("Histogram H",histH);
+                    imshow("Histogram S",histS);
+                    imshow("Histogram V",histV);
                 break;
                 case 'g':
                     if (!ready){
@@ -326,15 +393,17 @@ int main(int argc, char *argv[]){
                     }else{
                       namedWindow("Camera");
                       setMouseCallback("Camera", muestreo);
-                      namedWindow("Final");                    
-                      separar(currentImage, NewImage);
-                      createTrackbar("Rmin","Final",&minR,255,onTrackbar);
+                      //namedWindow("Final");                    
+                      separar(currentImage, NewImageRGB,NewImageYIQ,NewImageHSV);
+                      /createTrackbar("Rmin","Final",&minR,255,onTrackbar);
                       createTrackbar("Rmax","Final",&maxR,255,onTrackbar);
                       createTrackbar("Gmin","Final",&minG,255,onTrackbar);
                       createTrackbar("Gmax","Final",&maxG,255,onTrackbar);
                       createTrackbar("Bmin","Final",&minB,255,onTrackbar);
                       createTrackbar("Bmax","Final",&maxB,255,onTrackbar);
-                      imshow("Final", NewImage);
+                      imshow("Final RGB", NewImageRGB);
+                      imshow("Final YIQ", NewImageYIQ);
+                      imshow("Final HSV", NewImageHSV);
                       imshow("Camera", currentImage);                     
                     }
                 break;
@@ -357,7 +426,7 @@ int main(int argc, char *argv[]){
                     val3=-1;
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)RGB\ne)YIQ\nf)HSV\ng)Contraste\n";
+                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)RGB\ne)YIQ\nf)HSV\ng)Contrast\n";
                     cin>>sel;
                     ready = false;                    
                     break;
