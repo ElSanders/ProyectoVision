@@ -33,49 +33,43 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	segImg.at<Vec3b>(y,x)[0] = 254;
 	segImg.at<Vec3b>(y,x)[1] = 0;
 	segImg.at<Vec3b>(y,x)[2] = 0;
-	cout<<"Pintó"<<endl;
 	int dR,dG,dB,diff;
 	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x+1)[0];
 	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x+1)[1];
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x+1)[2];
 	diff=(dR+dG+dB);
 		cout<<diff<<endl;
-	if((diff<40 && diff>(-40)) && segImg.at<Vec3b>(y,x+1)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)[0]!=254){
 		seedX.push_back(x+1);
 		seedY.push_back(y);
 	}
-	cout<<"Primer vecino"<<endl;
 	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x-1)[0];
 	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x-1)[1];
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x-1)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<40 && diff>(-40)) && segImg.at<Vec3b>(y,x-1)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)[0]!=254){
 		seedX.push_back(x-1);
 		seedY.push_back(y);
 	}
-	cout<<"Segunda vecino"<<endl;
 	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y+1,x)[0];
 	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y+1,x)[1];
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y+1,x)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<40 && diff>(-40)) && segImg.at<Vec3b>(y+1,x)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)[0]!=254){
 		seedX.push_back(x);
 		seedY.push_back(y+1);
 	}
-	cout<<"Tercera vecino"<<endl;
 	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y-1,x)[0];
 	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y-1,x)[1];
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y-1,x)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<40 && diff>(-40)) && segImg.at<Vec3b>(y-1,x)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)[0]!=254){
 		seedX.push_back(x);
 		seedY.push_back(y-1);
 	}
-	cout<<"Cuarta vecino"<<endl;
-	//cout<<endl<<(int)original.at<Vec3b>(seeds.back())[0]<<endl;
 
 }
 
