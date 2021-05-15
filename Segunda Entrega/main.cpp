@@ -17,10 +17,11 @@ using namespace std;
 
 
 vector<int> seedX,seedY;
+Vec3b pinto;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented;
 char sel = 'e';
-
+int N = 1;
 //Obtiene los valores de YIQ de un pixel RGB
 void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
     Y=(unsigned char)(int)(0.299*(int)pix[2]+0.587*(int)pix[1]+0.114*(int)pix[0]);
@@ -30,16 +31,27 @@ void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
 
 void paint(const Mat &original, Mat &segImg,int x, int y){
 	cout<<"Empieza paint"<<endl;
-	segImg.at<Vec3b>(y,x)[0] = 254;
+	//Vec3b pinto;  // color a pintar
+	/*pinto[0] = 254;
+	pinto[1] = 0;
+	pinto[2] = 0;*/
+	pinto[0] = 254 *(N-2)*(N-3);
+	pinto[1] = 254 *(N-1)*(N-3);
+	pinto[2] = 254 *(N-2)*(N-1);
+	
+	segImg.at<Vec3b>(y,x) = pinto;
+	
+	/*segImg.at<Vec3b>(y,x)[0] = 254;
 	segImg.at<Vec3b>(y,x)[1] = 0;
-	segImg.at<Vec3b>(y,x)[2] = 0;
+	segImg.at<Vec3b>(y,x)[2] = 0;*/
+	
 	int dR,dG,dB,diff;
 	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x+1)[0];
 	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x+1)[1];
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x+1)[2];
 	diff=(dR+dG+dB);
 		cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)!=pinto){
 		seedX.push_back(x+1);
 		seedY.push_back(y);
 	}
@@ -48,7 +60,7 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x-1)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)!=pinto){
 		seedX.push_back(x-1);
 		seedY.push_back(y);
 	}
@@ -57,7 +69,7 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y+1,x)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)!=pinto){
 		seedX.push_back(x);
 		seedY.push_back(y+1);
 	}
@@ -66,7 +78,7 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y-1,x)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)[0]!=254){
+	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)!=pinto){
 		seedX.push_back(x);
 		seedY.push_back(y-1);
 	}
@@ -76,6 +88,7 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 void segment(const Mat &original, Mat &segImg){
 	original.copyTo(segImg);
 	int x , y;
+	
 	while(!seedX.empty()){
 		x = seedX.back();
 		y = seedY.back();
@@ -138,6 +151,39 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
     }
 }
 
+void mouseClicked2(int event, int x, int y, int flags, void* param){
+   
+    Vec3b pix = currentImage.at<Vec3b>(y,x);
+    unsigned char y_yiq,i_yiq,q_yiq;
+    yiq(pix,y_yiq,i_yiq,q_yiq);
+    switch (event)
+    {
+        case EVENT_LBUTTONDOWN:
+            //printf("\033[2J");
+            //printf("\033[%d;%dH", 0, 0);
+            cout << "X: " << x << " Y: "<< y <<endl;
+            cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
+            cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
+            if(sel == 'e'){
+            	seedX.push_back(x);
+            	seedY.push_back(y);
+            	segment(currentImage,segmented);
+            	// cambiar color 
+            	/*pinto[0] = 254 *(N-2)*(N-3);
+	        pinto[1] = 254 *(N-1)*(N-3);
+	        pinto[2] = 254 *(N-2)*(N-1);*/
+	        N++;
+            	
+            }
+            break;
+        case EVENT_MOUSEMOVE:
+            break;
+        case EVENT_LBUTTONUP:
+            break;
+    }
+}
+
+
 //Función para crear la imagen en fomrato YIQ
 void makeYIQ(const Mat &original, Mat &destination){
     if(destination.empty())
@@ -195,7 +241,7 @@ int main(int argc, char *argv[]){
                 break;
                 case 'e':
                     namedWindow("Original");
-                    setMouseCallback("Original", mouseClicked);
+                    setMouseCallback("Original", mouseClicked2);
                     imshow("Original",currentImage);
                     if(segmented.data)
  	                   imshow("Segmented",segmented);
