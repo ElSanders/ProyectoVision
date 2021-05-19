@@ -22,6 +22,8 @@ VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented;
 char sel = 'e';
 int N = 1;
+
+
 //Obtiene los valores de YIQ de un pixel RGB
 void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
     Y=(unsigned char)(int)(0.299*(int)pix[2]+0.587*(int)pix[1]+0.114*(int)pix[0]);
@@ -86,7 +88,7 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 }
 
 void segment(const Mat &original, Mat &segImg){
-	original.copyTo(segImg);
+	//original.copyTo(segImg);
 	int x , y;
 	
 	while(!seedX.empty()){
@@ -205,9 +207,11 @@ int main(int argc, char *argv[]){
     int thresh = 0;
     bool clicked = false, run = true;
     currentImage = imread("eeveelutions.jpg",IMREAD_COLOR);
+    currentImage.copyTo(segmented);
     while (run)
     {   
-        
+         //currentImage.copyTo(segmented);
+         
         /*if(!clicked){
             camera >> currentImage;
         }*/
