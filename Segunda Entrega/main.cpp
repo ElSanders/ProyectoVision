@@ -19,7 +19,7 @@ using namespace std;
 vector<int> seedX,seedY;
 Vec3b pinto;
 VideoCapture camera;
-Mat currentImage,grayImage,binaryImage,yiqImage,segmented;
+Mat currentImage,grayImage,binaryImage,yiqImage,segmented,binaria;
 char sel = 'e';
 int N = 1;
 
@@ -34,14 +34,17 @@ void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
 void paint(const Mat &original, Mat &segImg,int x, int y){
 	cout<<"Empieza paint"<<endl;
 	//Vec3b pinto;  // color a pintar
-	/*pinto[0] = 254;
-	pinto[1] = 0;
-	pinto[2] = 0;*/
+	
 	pinto[0] = 254 *(N-2)*(N-3);
-	pinto[1] = 254 *(N-1)*(N-3);
-	pinto[2] = 254 *(N-2)*(N-1);
+	pinto[1] = 200 *(N-1)*(N-3);
+	pinto[2] = 200 *(N-2)*(N-1);
 	
 	segImg.at<Vec3b>(y,x) = pinto;
+	
+	Vec3b fondo;  
+        fondo[0]=0;
+        fondo[1]=0;
+        fondo[2]=0;
 	
 	/*segImg.at<Vec3b>(y,x)[0] = 254;
 	segImg.at<Vec3b>(y,x)[1] = 0;
@@ -53,7 +56,8 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x+1)[2];
 	diff=(dR+dG+dB);
 		cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)!=pinto){
+	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)!=pinto){
+	if(segImg.at<Vec3b>(y,x+1)!= fondo && segImg.at<Vec3b>(y,x+1)!=pinto){
 		seedX.push_back(x+1);
 		seedY.push_back(y);
 	}
@@ -62,7 +66,8 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x-1)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)!=pinto){
+	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)!=pinto){
+	if(segImg.at<Vec3b>(y,x-1)!= fondo && segImg.at<Vec3b>(y,x-1)!=pinto){
 		seedX.push_back(x-1);
 		seedY.push_back(y);
 	}
@@ -71,7 +76,8 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y+1,x)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)!=pinto){
+	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)!=pinto){
+	if(segImg.at<Vec3b>(y+1,x)!= fondo && segImg.at<Vec3b>(y+1,x)!=pinto){
 		seedX.push_back(x);
 		seedY.push_back(y+1);
 	}
@@ -80,7 +86,8 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
 	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y-1,x)[2];
 	diff=(dR+dG+dB);
 		  cout<<diff<<endl;
-	if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)!=pinto){
+	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)!=pinto){
+	if(segImg.at<Vec3b>(y-1,x)!= fondo && segImg.at<Vec3b>(y-1,x)!=pinto){
 		seedX.push_back(x);
 		seedY.push_back(y-1);
 	}
@@ -206,8 +213,19 @@ int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
     bool clicked = false, run = true;
-    currentImage = imread("eeveelutions.jpg",IMREAD_COLOR);
-    currentImage.copyTo(segmented);
+    //currentImage = imread("eeveelutions.jpg",IMREAD_COLOR);
+    //currentImage = imread("frutas2.jpg",IMREAD_COLOR);
+    currentImage = imread("rojo.jpg",IMREAD_COLOR);
+    //currentImage.copyTo(segmented);
+    //inRange(currentImage, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),segmented); 
+    inRange(currentImage, Scalar(0,0,190), Scalar(10,10,255),binaria);
+    //segmented = binaria; //CAMBIAAAR
+    currentImage.copyTo(segmented,binaria);
+    
+    
+  
+       
+    
     while (run)
     {   
          //currentImage.copyTo(segmented);
@@ -222,6 +240,7 @@ int main(int argc, char *argv[]){
                     namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
                     imshow("Camera", currentImage); 
+                    //imshow("Camera", segmented); 
                     break;                                
                 case 'b':
                     namedWindow("Grayscale");
@@ -247,8 +266,10 @@ int main(int argc, char *argv[]){
                     namedWindow("Original");
                     setMouseCallback("Original", mouseClicked2);
                     imshow("Original",currentImage);
-                    if(segmented.data)
+                    if(segmented.data){
  	                   imshow("Segmented",segmented);
+ 	                   setMouseCallback("Segmented", mouseClicked2);
+ 	                   }
                 break;
                 default:
                     printf("\033[2J");
