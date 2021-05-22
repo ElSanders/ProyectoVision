@@ -23,6 +23,16 @@ Mat currentImage,grayImage,binaryImage,yiqImage,segmented,binaria;
 char sel = 'e';
 int N = 1;
 
+// Centroide
+Mat src_gray;
+int thresh = 100;
+int thresh_binarized = 240;
+RNG rng(12345);
+void thresh_callback(int, void* );
+void thresh_binarized_callback(int, void* );
+Mat src_binarized;
+const int max_thresh = 255;
+
 
 //Obtiene los valores de YIQ de un pixel RGB
 void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
@@ -209,6 +219,48 @@ void onTrackbar(int, void*){
   //Función vacía para los trackbars
 }
 
+//Funcion para encontrar centroide y bordes
+void thresh_callback(int, void* )
+{
+    Mat canny_output;
+    Canny( src_binarized, canny_output, thresh, thresh*3.5, 3 );
+    vector<vector<Point> > contours;
+    findContours( canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE );
+    vector<Moments> mu(contours.size() );
+    for( size_t i = 0; i < contours.size(); i++ )
+    {
+        mu[i] = moments( contours[i] );
+    }
+    vector<Point2f> mc( contours.size() );
+    for( size_t i = 0; i < contours.size(); i++ )
+    {
+        //add 1e-5 to avoid division by zero
+        mc[i] = Point2f( static_cast<float>(mu[i].m10 / (mu[i].m00 + 1e-5)),
+                         static_cast<float>(mu[i].m01 / (mu[i].m00 + 1e-5)) );
+        cout << "mc[" << i << "]=" << mc[i] << endl;
+    }
+    Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
+    for( size_t i = 0; i< contours.size(); i++ )
+    {
+        Scalar color = Scalar( rng.uniform(0, 256), rng.uniform(0,256), rng.uniform(0,256) );
+        drawContours( drawing, contours, (int)i, color, 2 );
+        circle( drawing, mc[i], 4, color, -1 );
+    }
+    imshow( "Contornos", drawing );
+    cout << "\t Info: Area and Contour Length \n";
+    for( size_t i = 0; i < contours.size(); i++ )
+    {
+        cout << " * Contorno[" << i << "] - Area (M_00) = " << std::fixed << std::setprecision(2) << mu[i].m00
+             << " - Area OpenCV: " << contourArea(contours[i]) << " - Longitud: " << arcLength( contours[i], true ) << endl;
+    }
+}
+
+//Para el trackbar de la imagen binaria para el centroide
+void thresh_binarized_callback(int, void* ){
+	threshold( src_gray, src_binarized, thresh_binarized, 255, 0);
+	imshow("Binarizada", src_binarized);
+}
+
 int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
@@ -222,7 +274,17 @@ int main(int argc, char *argv[]){
     //segmented = binaria; //CAMBIAAAR
     currentImage.copyTo(segmented,binaria);
     
-    
+    //Centroide
+    CommandLineParser parser( argc, argv, "{@input | stuff.jpg | input image}" );
+    Mat src = imread("rojo.jpg");
+    cvtColor(src, src_gray, COLOR_BGR2GRAY );
+    thresh_binarized_callback(0,0); 
+    const char* source_window = "Source";
+    namedWindow( source_window );
+    imshow( source_window, src );
+    createTrackbar( "Canny thresh:", source_window, &thresh, max_thresh, thresh_callback );
+    createTrackbar( "Binary threshold:", source_window, &thresh_binarized, max_thresh, thresh_binarized_callback );
+    thresh_callback( 0, 0 );
   
        
     
