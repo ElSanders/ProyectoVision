@@ -19,94 +19,134 @@ using namespace std;
 vector<int> seedX,seedY;
 Vec3b pinto;
 VideoCapture camera;
-Mat currentImage,grayImage,binaryImage,yiqImage,segmented,binaria;
+Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
 char sel = 'e';
 int N = 1;
+
+bool leftRight = false; // left is false, right is true
+
+
+// ************************** /Seed\ **************************
+/*
+ * Funcion para encontrar la semilla a un segmento
+ * Parametros:
+ *      original: Matriz imagen original
+ *      R, G, B: colors of the segment to look at
+ *
+ */
+void seed(const Mat &original, int height, int width, int offset) {
+
+    // Boolean to stay in loop until a seed is found
+    bool bSeed = false;
+
+    Vec3b fondo;
+    fondo[0]=0;
+    fondo[1]=0;
+    fondo[2]=0;
+
+    while (not bSeed) {
+        /*
+         * Crear un vec3b con solo las seeds, modificar el de segment
+         * y dejar esos vectores solos.
+         */
+        // Getting rand number in image size range
+        int rand_X = rand() % width + offset; // Offset it is the initial value for random
+        int rand_Y = rand() % height;
+
+        if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
+            //cout << "Esto es una semilla" << endl;
+            bSeed = true;
+            seedX.push_back(rand_X);
+            seedY.push_back(rand_Y);
+        }
+    }
+
+}
 
 
 //Obtiene los valores de YIQ de un pixel RGB
 void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
     Y=(unsigned char)(int)(0.299*(int)pix[2]+0.587*(int)pix[1]+0.114*(int)pix[0]);
     I=(unsigned char)(int)(0.596*(int)pix[2]-0.275*(int)pix[1]-0.321*(int)pix[0]+255)/2;
-    Q=(unsigned char)(int)(0.212*(int)pix[2]-0.523*(int)pix[1]+0.311*(int)pix[0]+255)/2;   
+    Q=(unsigned char)(int)(0.212*(int)pix[2]-0.523*(int)pix[1]+0.311*(int)pix[0]+255)/2;
 }
 
 void paint(const Mat &original, Mat &segImg,int x, int y){
-	cout<<"Empieza paint"<<endl;
-	//Vec3b pinto;  // color a pintar
-	
-	pinto[0] = 254 *(N-2)*(N-3);
-	pinto[1] = 200 *(N-1)*(N-3);
-	pinto[2] = 200 *(N-2)*(N-1);
-	
-	segImg.at<Vec3b>(y,x) = pinto;
-	
-	Vec3b fondo;  
-        fondo[0]=0;
-        fondo[1]=0;
-        fondo[2]=0;
-	
-	/*segImg.at<Vec3b>(y,x)[0] = 254;
-	segImg.at<Vec3b>(y,x)[1] = 0;
-	segImg.at<Vec3b>(y,x)[2] = 0;*/
-	
-	int dR,dG,dB,diff;
-	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x+1)[0];
-	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x+1)[1];
-	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x+1)[2];
-	diff=(dR+dG+dB);
-		cout<<diff<<endl;
-	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)!=pinto){
-	if(segImg.at<Vec3b>(y,x+1)!= fondo && segImg.at<Vec3b>(y,x+1)!=pinto){
-		seedX.push_back(x+1);
-		seedY.push_back(y);
-	}
-	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x-1)[0];
-	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x-1)[1];
-	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x-1)[2];
-	diff=(dR+dG+dB);
-		  cout<<diff<<endl;
-	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)!=pinto){
-	if(segImg.at<Vec3b>(y,x-1)!= fondo && segImg.at<Vec3b>(y,x-1)!=pinto){
-		seedX.push_back(x-1);
-		seedY.push_back(y);
-	}
-	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y+1,x)[0];
-	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y+1,x)[1];
-	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y+1,x)[2];
-	diff=(dR+dG+dB);
-		  cout<<diff<<endl;
-	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)!=pinto){
-	if(segImg.at<Vec3b>(y+1,x)!= fondo && segImg.at<Vec3b>(y+1,x)!=pinto){
-		seedX.push_back(x);
-		seedY.push_back(y+1);
-	}
-	dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y-1,x)[0];
-	dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y-1,x)[1];
-	dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y-1,x)[2];
-	diff=(dR+dG+dB);
-		  cout<<diff<<endl;
-	//if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)!=pinto){
-	if(segImg.at<Vec3b>(y-1,x)!= fondo && segImg.at<Vec3b>(y-1,x)!=pinto){
-		seedX.push_back(x);
-		seedY.push_back(y-1);
-	}
+    cout<<"Empieza paint"<<endl;
+    //Vec3b pinto;  // color a pintar
+
+    pinto[0] = 254 *(N-2)*(N-3);
+    pinto[1] = 200 *(N-1)*(N-3);
+    pinto[2] = 200 *(N-2)*(N-1);
+
+    segImg.at<Vec3b>(y,x) = pinto;
+
+    Vec3b fondo;
+    fondo[0]=0;
+    fondo[1]=0;
+    fondo[2]=0;
+
+    /*segImg.at<Vec3b>(y,x)[0] = 254;
+    segImg.at<Vec3b>(y,x)[1] = 0;
+    segImg.at<Vec3b>(y,x)[2] = 0;*/
+
+    int dR,dG,dB,diff;
+    dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x+1)[0];
+    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x+1)[1];
+    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x+1)[2];
+    diff=(dR+dG+dB);
+    cout<<diff<<endl;
+    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)!=pinto){
+    if(segImg.at<Vec3b>(y,x+1)!= fondo && segImg.at<Vec3b>(y,x+1)!=pinto){
+        seedX.push_back(x+1);
+        seedY.push_back(y);
+    }
+    dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x-1)[0];
+    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x-1)[1];
+    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x-1)[2];
+    diff=(dR+dG+dB);
+    cout<<diff<<endl;
+    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)!=pinto){
+    if(segImg.at<Vec3b>(y,x-1)!= fondo && segImg.at<Vec3b>(y,x-1)!=pinto){
+        seedX.push_back(x-1);
+        seedY.push_back(y);
+    }
+    dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y+1,x)[0];
+    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y+1,x)[1];
+    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y+1,x)[2];
+    diff=(dR+dG+dB);
+    cout<<diff<<endl;
+    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)!=pinto){
+    if(segImg.at<Vec3b>(y+1,x)!= fondo && segImg.at<Vec3b>(y+1,x)!=pinto){
+        seedX.push_back(x);
+        seedY.push_back(y+1);
+    }
+    dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y-1,x)[0];
+    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y-1,x)[1];
+    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y-1,x)[2];
+    diff=(dR+dG+dB);
+    cout<<diff<<endl;
+    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)!=pinto){
+    if(segImg.at<Vec3b>(y-1,x)!= fondo && segImg.at<Vec3b>(y-1,x)!=pinto){
+        seedX.push_back(x);
+        seedY.push_back(y-1);
+    }
 
 }
 
 void segment(const Mat &original, Mat &segImg){
-	//original.copyTo(segImg);
-	int x , y;
-	
-	while(!seedX.empty()){
-		x = seedX.back();
-		y = seedY.back();
-		seedX.pop_back();
-		seedY.pop_back();
-		if(y<original.rows-2 && x<original.cols-2)
-			paint(original,segImg,x,y);
-		
-	}
+    //original.copyTo(segImg);
+    int x , y;
+
+    while(!seedX.empty()){
+        x = seedX.back();
+        y = seedY.back();
+        seedX.pop_back();
+        seedY.pop_back();
+        if(y<original.rows-2 && x<original.cols-2)
+            paint(original,segImg,x,y);
+
+    }
 }
 
 //Cambia una imágen a escala de grises
@@ -117,7 +157,7 @@ void rgbToBW(const Mat &original, Mat &gray){
     for(int y=0; y <original.rows; y++){
         for(int x=0; x<original.cols;x++){
             sum+=((int)original.at<Vec3b>(y,x)[0]+(int)original.at<Vec3b>(y,x)[2]+(int)original.at<Vec3b>(y,x)[2]);
-            sum/=3; 
+            sum/=3;
             if(sum>255)
                 sum=255;
             if(sum<0)
@@ -149,8 +189,8 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
             cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
             cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
             if(sel == 'e'){
-            	seedX.push_back(x);
-            	seedY.push_back(y);
+                seedX.push_back(x);
+                seedY.push_back(y);
             }
             break;
         case EVENT_MOUSEMOVE:
@@ -159,37 +199,38 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
             break;
     }
 }
+// -------------------------------------------------------------------------------------------------------
+void mouseClicked2(){
+    // Getting size of image
+    Size s = segmented.size();
+    int height = s.height;
+    int width = s.width;
 
-void mouseClicked2(int event, int x, int y, int flags, void* param){
-   
+    // It is swtiching between left and right size
+    if (leftRight) { // Right side
+        seed(segmented, height, width/2, 0);
+        leftRight = not leftRight; // Switch
+    } else { // left size
+        seed(segmented, height, width, width/2);
+        leftRight = not leftRight; // Switch
+    }
+
+    int x = seedX.back();
+    int y = seedY.back();
+
     Vec3b pix = currentImage.at<Vec3b>(y,x);
+
     unsigned char y_yiq,i_yiq,q_yiq;
     yiq(pix,y_yiq,i_yiq,q_yiq);
-    switch (event)
-    {
-        case EVENT_LBUTTONDOWN:
-            //printf("\033[2J");
-            //printf("\033[%d;%dH", 0, 0);
-            cout << "X: " << x << " Y: "<< y <<endl;
-            cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
-            cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
-            if(sel == 'e'){
-            	seedX.push_back(x);
-            	seedY.push_back(y);
-            	segment(currentImage,segmented);
-            	// cambiar color 
-            	/*pinto[0] = 254 *(N-2)*(N-3);
-	        pinto[1] = 254 *(N-1)*(N-3);
-	        pinto[2] = 254 *(N-2)*(N-1);*/
-	        N++;
-            	
-            }
-            break;
-        case EVENT_MOUSEMOVE:
-            break;
-        case EVENT_LBUTTONUP:
-            break;
-    }
+
+
+    cout << "X: " << x << " Y: "<< y <<endl;
+    cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
+    cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
+
+    segment(currentImage,segmented);
+    N++;
+
 }
 
 
@@ -199,14 +240,14 @@ void makeYIQ(const Mat &original, Mat &destination){
         destination = Mat(original.rows, original.cols, original.type());
     for(int y=0; y <original.rows; y++){
         for(int x=0; x<original.cols;x++){
-          yiq(original.at<Vec3b>(y,x),destination.at<Vec3b>(y,x)[0],destination.at<Vec3b>(y,x)[1],destination.at<Vec3b>(y,x)[2]);
+            yiq(original.at<Vec3b>(y,x),destination.at<Vec3b>(y,x)[0],destination.at<Vec3b>(y,x)[1],destination.at<Vec3b>(y,x)[2]);
         }
     }
 }
 
 
 void onTrackbar(int, void*){
-  //Función vacía para los trackbars
+    //Función vacía para los trackbars
 }
 
 int main(int argc, char *argv[]){
@@ -217,66 +258,74 @@ int main(int argc, char *argv[]){
     //currentImage = imread("frutas2.jpg",IMREAD_COLOR);
     currentImage = imread("rojo.jpg",IMREAD_COLOR);
     //currentImage.copyTo(segmented);
-    //inRange(currentImage, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),segmented); 
+    //inRange(currentImage, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),segmented);
+    // Aqui se dejan estas en rojo y todo lo demas se va a negro
     inRange(currentImage, Scalar(0,0,190), Scalar(10,10,255),binaria);
     //segmented = binaria; //CAMBIAAAR
     currentImage.copyTo(segmented,binaria);
-    
-    
-  
-       
-    
+
+
+
+
+
     while (run)
-    {   
-         //currentImage.copyTo(segmented);
-         
+    {
+        //currentImage.copyTo(segmented);
+
         /*if(!clicked){
             camera >> currentImage;
         }*/
-        if (currentImage.data) 
+        if (currentImage.data)
         {
             switch(sel){
                 case 'a':
+                    cout << "a";
                     namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
-                    imshow("Camera", currentImage); 
-                    //imshow("Camera", segmented); 
-                    break;                                
+                    imshow("Camera", currentImage);
+                    //imshow("Camera", segmented);
+                    break;
                 case 'b':
+                    cout << "b";
                     namedWindow("Grayscale");
                     setMouseCallback("Grayscale", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     imshow("Grayscale",grayImage);
-                    break;              
+                    break;
                 case 'c':
+                    cout << "c";
                     namedWindow("Binarized");
                     setMouseCallback("Binarized", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     binarize(grayImage,binaryImage,thresh);
                     createTrackbar("Threshold","Binarized",&thresh,255,onTrackbar);
                     imshow("Binarized",binaryImage);
-                break;  
+                    break;
                 case 'd':
+                    cout << "d";
                     namedWindow("YIQ");
                     setMouseCallback("YIQ", mouseClicked);
                     makeYIQ(currentImage,yiqImage);
                     imshow("YIQ",yiqImage);
-                break;
+                    break;
                 case 'e':
+                    cout << "e";
                     namedWindow("Original");
-                    setMouseCallback("Original", mouseClicked2);
+                    //setMouseCallback("Original", mouseClicked2);
+                    mouseClicked2();
                     imshow("Original",currentImage);
                     if(segmented.data){
- 	                   imshow("Segmented",segmented);
- 	                   setMouseCallback("Segmented", mouseClicked2);
- 	                   }
-                break;
+                        imshow("Segmented",segmented);
+                        mouseClicked2();
+                    }
+                    break;
                 default:
+                    cout << "default";
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
                     cout<<"Incorrect image, please try again.\n";
                     run = false;
-                break;
+                    break;
             }
 
             switch(waitKey(3)){
@@ -290,15 +339,16 @@ int main(int argc, char *argv[]){
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
                     cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)YIQ\ne)Segmentation\n";
-                    cin>>sel;                  
+                    cin>>sel;
                     break;
                 case 'r':
-                	segment(currentImage,segmented);
-                	break;
+                    //seed(segmented);
+                    segment(currentImage,segmented);
+                    break;
                 case 'x':
                     run = false;
                     break;
-            } 
+            }
         }else{
             cout << "No image data.. " << endl;
         }
