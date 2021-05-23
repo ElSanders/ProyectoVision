@@ -16,15 +16,14 @@ using namespace cv;
 using namespace std;
 
 
-vector<int> seedX,seedY,m00,m01,m10;
+vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11,n20,n02,n11,fi1,fi2;
 Vec3b pinto;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
 char sel = 'e';
 int N = 1;
-int cx1,cy1;
-int cy2=0;
-int cx2=0;
+int cx1,cy1,cx2,cy2;
+
 
 bool leftRight = false; // left is false, right is true
 
@@ -91,6 +90,10 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
     m01[N-1]= m01[N-1]+ y;
     m10[N-1]= m10[N-1]+ x;
     
+    m02[N-1]= m02[N-1] + pow(y,2);
+    m20[N-1]= m20[N-1] + pow(x,2);
+    m11[N-1]= m11[N-1] + x*y;
+       
 
     Vec3b fondo;
     fondo[0]=0;
@@ -217,12 +220,19 @@ void busca(){
     int height = s.height;
     int width = s.width;
        
+        //inicializar momentos
         m00.push_back(0);
         m00.push_back(0);
         m01.push_back(0);
         m01.push_back(0);
         m10.push_back(0);
         m10.push_back(0);
+        m20.push_back(0);
+        m20.push_back(0);
+        m02.push_back(0);
+        m02.push_back(0);
+        m11.push_back(0);
+        m11.push_back(0);
         
         
         // Figura izquierda
@@ -235,7 +245,22 @@ void busca(){
         cout << "suma X " << m10[0] <<endl;
         cout << "suma Y " << m01[0] <<endl;
         cout << "CX " << cx1 <<endl;
-        cout << "CY " << cy1 <<endl;          
+        cout << "CY " << cy1 <<endl; 
+            // momentos segundo orden
+        mu20.push_back(m20[0] - (cx1*m10[0]));
+        mu02.push_back(m02[0] - (cy1*m01[0])) ;
+        mu11.push_back(m11[0] - (cy1*m10[0])) ;
+        
+        //momentos normalizados 
+        n20.push_back(mu20[0]/pow(m00[0],2));
+        n02.push_back(mu02[0]/pow(m00[0],2));
+        n11.push_back(mu11[0]/pow(m00[0],2));
+        
+        // fi 1 y fi 2 
+        fi1.push_back(n20[0]+n02[0]);
+        fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2));
+        
+             
         circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
         
         N++; 
@@ -243,25 +268,44 @@ void busca(){
    
         //Figura derecha
         seed(segmented, height, width, width/2);
-        segment(currentImage,segmented);  
-        
-            // pintar de azul centrofigura 1
-        //segmented.at<Vec3b>(cy1,cx1) = pinto;
-        //circle (segmented,(cy1,cx2),4,(0,0,255),-1);
-            //centroide figura 2 
+        segment(currentImage,segmented);          
         cout << "Area 2 = " << m00[1] <<endl;
+              //centroide figura 2
         cx2 = (m10[1]/(m00[1]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy2 = (m01[1]/(m00[1]+ 1e-5)); // float ?
         cout << "suma X " << m10[1] <<endl;
         cout << "suma Y " << m01[1] <<endl;
         cout << "CX " << cx2 <<endl;
         cout << "CY " << cy2 <<endl; 
+        
+        // momentos segundo orden
+        mu20.push_back(m20[1] - (cx2*m10[1]));
+        mu02.push_back(m02[1] - (cy2*m01[1])) ;
+        mu11.push_back(m11[1] - (cy2*m10[1])) ;
+        
+        //momentos normalizados
+        n20.push_back(mu20[1]/pow(m00[1],2));
+        n02.push_back(mu02[1]/pow(m00[1],2)); 
+        
+        // fi 1 y fi 2 
+        fi1.push_back(n20[1]+n02[1]);
+        fi2.push_back(pow((n20[1]-n02[1]),2)+4*pow(n11[1],2));
+        
+        
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);  
         N=1;   
         
         m00.clear();
         m10.clear();
         m01.clear();
+        m20.clear();
+        m02.clear();
+        m11.clear();
+        mu02.clear();
+        mu20.clear();
+        mu11.clear();
+        n20.clear();
+        n02.clear();
 }
 
 
@@ -294,9 +338,9 @@ void separar(const Mat &original, Mat &editRGB){
     
   //Filtro y máscara
   // Para foto
-  //inRange(original, Scalar(0,0,130), Scalar(10,10,255),maskRGB); 
+  inRange(original, Scalar(0,0,130), Scalar(10,10,255),maskRGB); 
   // Para Video OJO -> ajustar limites de color segun su tinta 
-  inRange(original, Scalar(0,0,130), Scalar(90,90,255),maskRGB);     
+  //inRange(original, Scalar(0,0,130), Scalar(90,90,255),maskRGB);     
   original.copyTo(editRGB,maskRGB);
   
 }
@@ -318,8 +362,8 @@ int main(int argc, char *argv[]){
         //currentImage.copyTo(segmented);
 
         if(!clicked){
-     //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
-    camera >> currentImage;
+     currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
+    //camera >> currentImage;
    
         
         }
