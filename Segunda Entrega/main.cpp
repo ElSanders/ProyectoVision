@@ -4,7 +4,7 @@ Profesor José Luis Gordillo
 Equipo 5
 Luis Sandro González Solalinde A01365445
 Nathalie Vichis Lagunes A01364838
-Delia Itzel López Dueñas A00821792
+
 */
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
@@ -24,7 +24,6 @@ Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
 char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2;
-
 
 bool leftRight = false; // left is false, right is true
 
@@ -59,13 +58,13 @@ void seed(const Mat &original, int height, int width, int offset) {
             rand_Y = rand() % height;
 
         if(rand_Y<original.rows-2 && rand_X<original.cols-2){
-        if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
-            //cout << "Esto es una semilla" << endl;
-            bSeed = true;
-            seedX.push_back(rand_X);
-            seedY.push_back(rand_Y);
-        }
-    }
+	        if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
+	            //cout << "Esto es una semilla" << endl;
+	            bSeed = true;
+	            seedX.push_back(rand_X);
+	            seedY.push_back(rand_Y);
+	        }
+    	}
     }
 
 }
@@ -101,47 +100,21 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
     fondo[1]=0;
     fondo[2]=0;
 
-    /*segImg.at<Vec3b>(y,x)[0] = 254;
-    segImg.at<Vec3b>(y,x)[1] = 0;
-    segImg.at<Vec3b>(y,x)[2] = 0;*/
-
-    /*int dR,dG,dB,diff;
-    dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x+1)[0];
-    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x+1)[1];
-    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x+1)[2];
-    diff=(dR+dG+dB);
-    cout<<diff<<endl;*/
-    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x+1)!=pinto){
     if(segImg.at<Vec3b>(y,x+1)!= fondo && segImg.at<Vec3b>(y,x+1)!=pinto){
         seedX.push_back(x+1);
         seedY.push_back(y);
     }
-    /*dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y,x-1)[0];
-    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y,x-1)[1];
-    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y,x-1)[2];
-    diff=(dR+dG+dB);
-    cout<<diff<<endl;*/
-    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y,x-1)!=pinto){
+
     if(segImg.at<Vec3b>(y,x-1)!= fondo && segImg.at<Vec3b>(y,x-1)!=pinto){
         seedX.push_back(x-1);
         seedY.push_back(y);
     }
-    /*dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y+1,x)[0];
-    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y+1,x)[1];
-    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y+1,x)[2];
-    diff=(dR+dG+dB);
-    cout<<diff<<endl;*/
-    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y+1,x)!=pinto){
+
     if(segImg.at<Vec3b>(y+1,x)!= fondo && segImg.at<Vec3b>(y+1,x)!=pinto){
         seedX.push_back(x);
         seedY.push_back(y+1);
     }
-    /*dB = original.at<Vec3b>(y,x)[0]-original.at<Vec3b>(y-1,x)[0];
-    dG = original.at<Vec3b>(y,x)[1]-original.at<Vec3b>(y-1,x)[1];
-    dR = original.at<Vec3b>(y,x)[2]-original.at<Vec3b>(y-1,x)[2];
-    diff=(dR+dG+dB);
-    cout<<diff<<endl;*/
-    //if((diff<25 && diff>(-25)) && segImg.at<Vec3b>(y-1,x)!=pinto){
+
     if(segImg.at<Vec3b>(y-1,x)!= fondo && segImg.at<Vec3b>(y-1,x)!=pinto){
         seedX.push_back(x);
         seedY.push_back(y-1);
@@ -223,16 +196,10 @@ void busca(){
        
         //inicializar momentos
         m00.push_back(0);
-        m00.push_back(0);
-        m01.push_back(0);
         m01.push_back(0);
         m10.push_back(0);
-        m10.push_back(0);
-        m20.push_back(0);
         m20.push_back(0);
         m02.push_back(0);
-        m02.push_back(0);
-        m11.push_back(0);
         m11.push_back(0);
         
         
@@ -286,15 +253,17 @@ void busca(){
         mu11.push_back(m11[1] - (cy2*m10[1])) ;
         
         //momentos normalizados
-        n20.push_back(mu20[1]/pow(m00[1],2));
-        n02.push_back(mu02[1]/pow(m00[1],2)); 
+        n20.push_back((float) (mu20[1]/pow(m00[1],2)));
+        n02.push_back((float) (mu02[1]/pow(m00[1],2)));
+        n11.push_back((float) (mu11[1]/pow(m00[1],2)));
         
         // fi 1 y fi 2 
         fi1.push_back(n20[1]+n02[1]);
         fi2.push_back(pow((n20[1]-n02[1]),2)+4*pow(n11[1],2));
+
         cout << "Fi1  " << fi1[1] <<endl;
         cout << "Fi2  " << fi2[1] <<endl;
-        
+
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);  
         N=1;   
         
@@ -413,7 +382,6 @@ int main(int argc, char *argv[]){
                     busca();
                     imshow("Original",currentImage);
                     imshow("Segmented",segmented);
-                        
                     break;
                 default:
                     cout << "default";
@@ -450,7 +418,3 @@ int main(int argc, char *argv[]){
         }
     }
 }
-
-
-
-
