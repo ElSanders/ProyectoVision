@@ -16,7 +16,8 @@ using namespace cv;
 using namespace std;
 
 
-vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11,n20,n02,n11,fi1,fi2;
+vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11;
+vector <float> n20,n02,n11,fi1,fi2;
 Vec3b pinto;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
@@ -252,14 +253,15 @@ void busca(){
         mu11.push_back(m11[0] - (cy1*m10[0])) ;
         
         //momentos normalizados 
-        n20.push_back(mu20[0]/pow(m00[0],2));
-        n02.push_back(mu02[0]/pow(m00[0],2));
-        n11.push_back(mu11[0]/pow(m00[0],2));
+        n20.push_back((float) (mu20[0]/pow(m00[0],2)));
+        n02.push_back((float) (mu02[0]/pow(m00[0],2)));
+        n11.push_back((float) (mu11[0]/pow(m00[0],2)));
         
         // fi 1 y fi 2 
         fi1.push_back(n20[0]+n02[0]);
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2));
-        
+        cout << "Fi1  " << fi1[0] <<endl;
+        cout << "Fi2  " << fi2[0] <<endl;
              
         circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
         
@@ -290,7 +292,8 @@ void busca(){
         // fi 1 y fi 2 
         fi1.push_back(n20[1]+n02[1]);
         fi2.push_back(pow((n20[1]-n02[1]),2)+4*pow(n11[1],2));
-        
+        cout << "Fi1  " << fi1[1] <<endl;
+        cout << "Fi2  " << fi2[1] <<endl;
         
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);  
         N=1;   
@@ -306,6 +309,8 @@ void busca(){
         mu11.clear();
         n20.clear();
         n02.clear();
+        fi1.clear();
+        fi2.clear();
 }
 
 
