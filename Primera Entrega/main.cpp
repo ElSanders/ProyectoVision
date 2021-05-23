@@ -31,39 +31,6 @@ char sel = 'a';
 bool ready = false;
 
 //Obtiene los valores de YIQ de un pixel RGB
-<<<<<<< HEAD:main.cpp
-vector<int> yiq(int R, int G, int B){
-    vector<int> yiq;
-    yiq.push_back((0.299*R+0.587*G+0.114*B));
-    yiq.push_back((0.596*R-0.275*G-0.321*B+255)/2);
-    yiq.push_back((0.212*R-0.523*G+0.311*B+255)/2);
-    return yiq;   
-}
-
-void hsv(const Mat &original, Mat &destination){
-  cvtColor(original,destination,COLOR_RGB2HSV);
-}
-
-//Separar objeto    
-void separar(const Mat &original, Mat &editRGB, Mat &editYIQ,Mat &editHSV){
-  Mat maskRGB, maskYIQ, maskHSV;
-  //Reset image
-  editRGB = Mat(0, 0, 0, Scalar( 0,0,0));
-  editYIQ = Mat(0, 0, 0, Scalar( 0,0,0));
-  editHSV = Mat(0, 0, 0, Scalar( 0,0,0));
-  
-  //Filtro y máscara
-  inRange(original, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),maskRGB);     
-  original.copyTo(editRGB,maskRGB);
-  
-  inRange(original, Scalar(minY,minI,minQ), Scalar(maxY,maxI,maxQ),maskYIQ);     
-  original.copyTo(editYIQ,maskYIQ);
-  
-  inRange(original, Scalar(minV,minS,minH), Scalar(maxV,maxS,maxH),maskHSV);     
-  original.copyTo(editHSV,maskHSV);
-}
-
-=======
 void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
     Y=(unsigned char)(int)(0.299*(int)pix[2]+0.587*(int)pix[1]+0.114*(int)pix[0]);
     I=(unsigned char)(int)(0.596*(int)pix[2]-0.275*(int)pix[1]-0.321*(int)pix[0]+255)/2;
@@ -93,19 +60,14 @@ void separar(const Mat &original, const Mat &yiqMat, const Mat &hsvMat, Mat &edi
   hsvMat.copyTo(editHSV,maskHSV);
 }
 
->>>>>>> b14e904ba47adda129c28a707d232a971f393458:Primera Entrega/main.cpp
 
 //Muestreo de imagen 
 void muestreo(int event, int x, int y, int flags, void* param){
     hsv(currentImage,hsvImage);
     Vec3b pix = currentImage.at<Vec3b>(y,x);  
     Vec3b hsvPix = hsvImage.at<Vec3b>(y,x);
-<<<<<<< HEAD:main.cpp
-    vector<int> yiq_vec = yiq((int)pix[2],(int)pix[1],(int)pix[0]); 
-=======
     unsigned char y_yiq,i_yiq,q_yiq;
     yiq(pix,y_yiq,i_yiq,q_yiq);
->>>>>>> b14e904ba47adda129c28a707d232a971f393458:Primera Entrega/main.cpp
      switch (event)
      {
         
@@ -116,11 +78,7 @@ void muestreo(int event, int x, int y, int flags, void* param){
             cout << "X: " << x << " Y: "<< y <<endl;
             cout << "R: " << (int)pix[2] << " G: " 
             << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
-<<<<<<< HEAD:main.cpp
-            cout << "Y: " << yiq_vec[0] << " I: " << yiq_vec[1]<< " Q: " << yiq_vec[2]<<endl;
-=======
             cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
->>>>>>> b14e904ba47adda129c28a707d232a971f393458:Primera Entrega/main.cpp
             cout << "H: " << (int)hsvPix[2] << " S: " << (int)hsvPix[1]<< " V: " << (int)hsvPix[0]<<endl;
             
             //crear vectores 
@@ -128,15 +86,9 @@ void muestreo(int event, int x, int y, int flags, void* param){
             muestraG.push_back((int)pix[1]); 
             muestraB.push_back((int)pix[0]); 
             
-<<<<<<< HEAD:main.cpp
-            muestraY.push_back(yiq_vec[0]);   
-            muestraI.push_back(yiq_vec[1]); 
-            muestraQ.push_back(yiq_vec[2]); 
-=======
             muestraY.push_back((int)y_yiq);   
             muestraI.push_back((int)i_yiq); 
             muestraQ.push_back((int)q_yiq); 
->>>>>>> b14e904ba47adda129c28a707d232a971f393458:Primera Entrega/main.cpp
             
             muestraH.push_back((int)hsvPix[2]);   
             muestraS.push_back((int)hsvPix[1]); 
@@ -182,26 +134,6 @@ void muestreo(int event, int x, int y, int flags, void* param){
            maxS= *max_element(muestraS.begin(), muestraS.end());
            minV= *min_element(muestraV.begin(), muestraV.end()); 
            maxV= *max_element(muestraV.begin(), muestraV.end());
-           
-<<<<<<< HEAD:main.cpp
-           
-           // solo probando que fuincione el min y max 
-           //cout<< "\nMin Element = "<< minR <<endl;
-           //cout << "\nMax Element = "<< maxR <<endl;
-=======
-           //Borrar vectores
-           muestraR.clear();
-           muestraG.clear();
-           muestraB.clear();
-           
-           muestraY.clear();
-           muestraI.clear();
-           muestraQ.clear();
-           
-           muestraH.clear();
-           muestraS.clear();
-           muestraV.clear();
->>>>>>> b14e904ba47adda129c28a707d232a971f393458:Primera Entrega/main.cpp
            
            //Borrar vectores
            muestraR.clear();
@@ -451,16 +383,10 @@ int main(int argc, char *argv[]){
                     }else{
                       namedWindow("Camera");
                       setMouseCallback("Camera", muestreo);
-<<<<<<< HEAD:main.cpp
-                      //namedWindow("Final");                    
-                      separar(currentImage, NewImageRGB,NewImageYIQ,NewImageHSV);
-                      /createTrackbar("Rmin","Final",&minR,255,onTrackbar);
-=======
                       makeYIQ(currentImage,yiqImage);
                       hsv(currentImage,hsvImage);                    
                       separar(currentImage, yiqImage,hsvImage,NewImageRGB,NewImageYIQ,NewImageHSV);
                       createTrackbar("Rmin","Final",&minR,255,onTrackbar);
->>>>>>> b14e904ba47adda129c28a707d232a971f393458:Primera Entrega/main.cpp
                       createTrackbar("Rmax","Final",&maxR,255,onTrackbar);
                       createTrackbar("Gmin","Final",&minG,255,onTrackbar);
                       createTrackbar("Gmax","Final",&maxG,255,onTrackbar);
@@ -504,6 +430,7 @@ int main(int argc, char *argv[]){
         }
     }
 }
+
 
 
 
