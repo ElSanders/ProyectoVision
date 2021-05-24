@@ -12,8 +12,12 @@ Nathalie Vichis Lagunes A01364838
 #include <iostream>
 #include <unistd.h>
 #include <bits/stdc++.h>
+#include <chrono>
+#include <thread>
+#include <mutex>
 using namespace cv;
 using namespace std;
+using namespace std::chrono_literals;
 
 
 vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11;
@@ -55,8 +59,8 @@ void seed(const Mat &original, int height, int width, int offset) {
     fondo[0]=0;
     fondo[1]=0;
     fondo[2]=0;
-
-    while (bSeed == false ) {
+    int iter = 0;
+    while (bSeed == false && iter<20) {
         /*
          * Crear un vec3b con solo las seeds, modificar el de segment
          * y dejar esos vectores solos.
@@ -64,8 +68,8 @@ void seed(const Mat &original, int height, int width, int offset) {
         // Getting rand number in image size range
             rand_X = rand() % width + offset; // Offset it is the initial value for random
             rand_Y = rand() % height;
-
-        if(rand_Y<original.rows-2 && rand_X<original.cols-2){
+        //cout<<"Se revisa fondo"<<endl;
+        if(rand_Y<original.rows-2 && rand_X<original.cols-2 && rand_X>-1 && rand_Y>-1){
 	        if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
 	            //cout << "Esto es una semilla" << endl;
 	            bSeed = true;
@@ -73,6 +77,7 @@ void seed(const Mat &original, int height, int width, int offset) {
 	            seedY.push_back(rand_Y);
 	        }
     	}
+        iter++;
     }
     cout<<"Termina seed"<<endl;
 
@@ -178,11 +183,12 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
         seedX.push_back(x);
         seedY.push_back(y-1);
     }
-
+//cout<<"Termina paint"<<endl;
 }
 
 void segment(const Mat &original, Mat &segImg){
     //original.copyTo(segImg);
+    //cout<<"Empieza segment"<<endl;
     int x , y;
 
     while(!seedX.empty()){
@@ -193,7 +199,7 @@ void segment(const Mat &original, Mat &segImg){
         //if(y<original.rows-2 && x<original.cols-2)
             paint(original,segImg,x,y);
     }
-    
+    //cout<<"Termina segment"<<endl;
 }
 
 //Cambia una imágen a escala de grises
@@ -246,10 +252,13 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
             break;
     }
 }
+
 // -------------------------------------------------------------------------------------------------------
 void busca(){
+    //cout<<"Empieza busca"<<endl;
     // Getting size of image
     Size s = segmented.size();
+    //cout<<"Se obtiene size"<<endl;
     int height = s.height;
     int width = s.width;
        
@@ -271,10 +280,12 @@ void busca(){
         m11.push_back(0);
         
         
-        
+        //cout<<"Empieza seed"<<endl;
         // Figura izquierda
-        seed(segmented, height, width/2, 0);               
-        segment(currentImage,segmented);        
+        seed(segmented, height, width/2, 0);
+        //cout<<"Termina seed"<<endl;               
+        segment(currentImage,segmented);  
+        //cout <<"Termina segment"<<endl;      
         cout << "Area 1 = " << m00[0] <<endl;
             //centroide figura 1
         cx1 = (m10[0]/(m00[0]+ 1e-5)); //add 1e-5 to avoid division by zero
@@ -354,8 +365,31 @@ void busca(){
         n02.clear();
         fi1.clear();
         fi2.clear();
+        //cout<<"Termina busca"<<endl;
 }
 
+int buscaWrapped()
+{
+    std::mutex m;
+    std::condition_variable cond;
+    int retValue;
+
+    std::thread t([&cond, &retValue]() 
+    {
+        busca();
+        cond.notify_one();
+    });
+
+    t.detach();
+
+    {
+        std::unique_lock<std::mutex> l(m);
+        if(cond.wait_for(l, 1s) == std::cv_status::timeout) 
+            throw std::runtime_error("Timeout");
+    }
+
+    return retValue;    
+}
 
 //Función para crear la imagen en fomrato YIQ
 void makeYIQ(const Mat &original, Mat &destination){
@@ -453,8 +487,13 @@ int main(int argc, char *argv[]){
                 case 'e':
                     cout << "e";
                     separar(currentImage, segmented);
-                    namedWindow("Original");                    
-                    busca();
+                    namedWindow("Original");  
+                    try{
+                        buscaWrapped();
+                    }
+                    catch(runtime_error& e){
+                        cout<<"Timed out, trying again."<<endl;
+                    }                  
                     imshow("Original",currentImage);
                     imshow("Segmented",segmented);
                     break;
