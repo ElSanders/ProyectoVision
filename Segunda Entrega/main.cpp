@@ -24,14 +24,14 @@ Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
 char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2;
-const float maxApplefi1   = 0.0887028, maxApplefi2   = 7.457e-05,
-            maxPearfi1    = 0, maxPearfi2    = 0,
+const float maxApplefi1   = 0.64667,     maxApplefi2   = 3.71094,
+            maxPearfi1    = -1.97895e-05,maxPearfi2    = 1.82586,
             maxBanannafi1 = 5.36383e-05, maxBanannafi2 = 7.4782e-05,
-            maxCarrotfi1  = 0, maxCarrotfi2  = 0,
-            minApplefi1   = 0.0874232, minApplefi2   = 6.23816e-05, 
-            minPearfi1    = 0, minPearfi2    = 0,
+            maxCarrotfi1  = 1.01629e-05, maxCarrotfi2  = 1.45773,
+            minApplefi1   = 0.0887028,   minApplefi2   = 6.23816e-05, 
+            minPearfi1    = -2.10041e-05,minPearfi2    = 1.82586,
             minBanannafi1 = 4.48383e-05, minBanannafi2 = 0.869049,
-            minCarrotfi1  = 0, minCarrotfi2  = 0;
+            minCarrotfi1  = 7.15575e-06, minCarrotfi2  = 1.44322;
 
 bool leftRight = false; // left is false, right is true
 
@@ -344,7 +344,7 @@ void separar(const Mat &original, Mat &editRGB){
     
   //Filtro y máscara
   // Para foto
-  inRange(original, Scalar(0,0,130), Scalar(10,10,255),maskRGB); 
+  inRange(original, Scalar(0,0,130), Scalar(124,131,255),maskRGB); 
   // Para Video OJO -> ajustar limites de color segun su tinta 
   //inRange(original, Scalar(0,0,130), Scalar(90,90,255),maskRGB);     
   original.copyTo(editRGB,maskRGB);
@@ -368,8 +368,8 @@ int main(int argc, char *argv[]){
         //currentImage.copyTo(segmented);
 
         if(!clicked){
-     currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
-    //camera >> currentImage;
+     //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
+     camera >> currentImage;
    
         
         }
