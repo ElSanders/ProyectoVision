@@ -24,6 +24,14 @@ Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
 char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2;
+const float maxApplefi1   = 0.0887028, maxApplefi2   = 7.457e-05,
+            maxPearfi1    = 0, maxPearfi2    = 0,
+            maxBanannafi1 = 5.36383e-05, maxBanannafi2 = 7.4782e-05,
+            maxCarrotfi1  = 0, maxCarrotfi2  = 0,
+            minApplefi1   = 0.0874232, minApplefi2   = 6.23816e-05, 
+            minPearfi1    = 0, minPearfi2    = 0,
+            minBanannafi1 = 4.48383e-05, minBanannafi2 = 0.869049,
+            minCarrotfi1  = 0, minCarrotfi2  = 0;
 
 bool leftRight = false; // left is false, right is true
 
@@ -66,9 +74,33 @@ void seed(const Mat &original, int height, int width, int offset) {
 	        }
     	}
     }
+    cout<<"Termina seed"<<endl;
 
 }
 
+bool inBounds(float val, float min, float max){
+    if(val<=max && val>=min)
+        return true;
+    return false;
+}
+
+//Función para identificar objetos
+void identify(float fi1, float fi2){
+
+    if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
+        cout<<"Manzana reconocida"<<endl;
+    }
+    else if(inBounds(fi1,minPearfi1,maxPearfi1) && inBounds(fi2,minPearfi2,maxPearfi2)){
+        cout<<"Pera reconocida"<<endl;
+    }
+    else if(inBounds(fi1,minBanannafi1,maxBanannafi1) && inBounds(fi2,minBanannafi2,maxBanannafi2)){
+        cout<<"Plátano reconocido"<<endl;
+    }
+    else if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) && inBounds(fi2,minCarrotfi2,maxCarrotfi2)){
+        cout<<"Pera reconocida"<<endl;
+    }
+
+}
 
 //Obtiene los valores de YIQ de un pixel RGB
 void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
@@ -229,7 +261,7 @@ void busca(){
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2));
         cout << "Fi1  " << fi1[0] <<endl;
         cout << "Fi2  " << fi2[0] <<endl;
-             
+        identify(fi1[0],fi2[0]);     
         circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
         
         N++; 
@@ -263,7 +295,7 @@ void busca(){
 
         cout << "Fi1  " << fi1[1] <<endl;
         cout << "Fi2  " << fi2[1] <<endl;
-
+        identify(fi1[1],fi2[1]);
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);  
         N=1;   
         
