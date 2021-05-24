@@ -20,10 +20,10 @@ vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11;
 vector <float> n20,n02,n11,fi1,fi2;
 Vec3b pinto;
 VideoCapture camera;
-Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria;
+Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria,mira;
 char sel = 'e';
 int N = 1;
-int cx1,cy1,cx2,cy2;
+int cx1,cy1,cx2,cy2,small,big;
 const float maxApplefi1   = 0.64667,     maxApplefi2   = 3.71094,
             maxPearfi1    = -1.97895e-05,maxPearfi2    = 1.82586,
             maxBanannafi1 = 5.36383e-05, maxBanannafi2 = 7.4782e-05,
@@ -89,16 +89,43 @@ void identify(float fi1, float fi2){
 
     if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
         cout<<"Manzana reconocida"<<endl;
+        small=1;
     }
     else if(inBounds(fi1,minPearfi1,maxPearfi1) && inBounds(fi2,minPearfi2,maxPearfi2)){
         cout<<"Pera reconocida"<<endl;
+        small=2;
     }
     else if(inBounds(fi1,minBanannafi1,maxBanannafi1) && inBounds(fi2,minBanannafi2,maxBanannafi2)){
         cout<<"Plátano reconocido"<<endl;
+        big=1;
     }
     else if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) && inBounds(fi2,minCarrotfi2,maxCarrotfi2)){
         cout<<"Pera reconocida"<<endl;
+        big=2;
     }
+    
+    //------MIRA---pintar cuadrante
+    
+    
+    if ((small == 1) && (big ==1)){ // manzana y platano
+    
+        circle (mira,Point(290,131),8,(0,0,255),-1);
+    }
+    
+    if ((small == 2) && (big ==1)){ // pera y platano
+    
+        circle (mira,Point(290,203),8,(0,0,255),-1);
+    }
+    if ((small == 1) && (big ==2)){ // manzana y zanahoria
+    
+         circle (mira,Point(200,135),8,(0,0,255),-1);
+    }
+    if ((small == 2) && (big ==2)){ // pera y zanahoria
+     
+        circle (mira,Point(223,199),8,(0,0,255),-1);
+    
+    }
+    imshow("Mira", mira); // falta borrar el circulo para pintarlo en otro lado
 
 }
 
@@ -227,12 +254,22 @@ void busca(){
     int width = s.width;
        
         //inicializar momentos
+       
         m00.push_back(0);
         m01.push_back(0);
         m10.push_back(0);
         m20.push_back(0);
         m02.push_back(0);
         m11.push_back(0);
+         // doble o falla el segundo centroide
+         
+        m00.push_back(0);
+        m01.push_back(0);
+        m10.push_back(0);
+        m20.push_back(0);
+        m02.push_back(0);
+        m11.push_back(0);
+        
         
         
         // Figura izquierda
@@ -246,6 +283,8 @@ void busca(){
         cout << "suma Y " << m01[0] <<endl;
         cout << "CX " << cx1 <<endl;
         cout << "CY " << cy1 <<endl; 
+        circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
+        
             // momentos segundo orden
         mu20.push_back(m20[0] - (cx1*m10[0]));
         mu02.push_back(m02[0] - (cy1*m01[0])) ;
@@ -262,7 +301,7 @@ void busca(){
         cout << "Fi1  " << fi1[0] <<endl;
         cout << "Fi2  " << fi2[0] <<endl;
         identify(fi1[0],fi2[0]);     
-        circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
+        
         
         N++; 
         
@@ -278,6 +317,9 @@ void busca(){
         cout << "suma Y " << m01[1] <<endl;
         cout << "CX " << cx2 <<endl;
         cout << "CY " << cy2 <<endl; 
+        circle (segmented,Point(cx2,cy2),4,(255,0,0),-1); 
+       
+        
         
         // momentos segundo orden
         mu20.push_back(m20[1] - (cx2*m10[1]));
@@ -296,7 +338,7 @@ void busca(){
         cout << "Fi1  " << fi1[1] <<endl;
         cout << "Fi2  " << fi2[1] <<endl;
         identify(fi1[1],fi2[1]);
-        circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);  
+         
         N=1;   
         
         m00.clear();
@@ -344,9 +386,9 @@ void separar(const Mat &original, Mat &editRGB){
     
   //Filtro y máscara
   // Para foto
-  inRange(original, Scalar(0,0,130), Scalar(124,131,255),maskRGB); 
+  //inRange(original, Scalar(0,0,130), Scalar(10,10,255),maskRGB); 
   // Para Video OJO -> ajustar limites de color segun su tinta 
-  //inRange(original, Scalar(0,0,130), Scalar(90,90,255),maskRGB);     
+  inRange(original, Scalar(0,0,130), Scalar(90,90,255),maskRGB);     
   original.copyTo(editRGB,maskRGB);
   
 }
@@ -356,7 +398,8 @@ int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
     bool clicked = false, run = true;
-       
+    mira = imread("mira.jpg",IMREAD_COLOR); 
+    
     //currentImage.copyTo(segmented);
     //inRange(currentImage, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),segmented);
    
