@@ -60,8 +60,9 @@ void seed(const Mat &original, int height, int width, int offset) {
     fondo[0]=0;
     fondo[1]=0;
     fondo[2]=0;
-    int iter = 0;
-    while (bSeed == false && iter<20) {
+    //int iter = 0;
+   // while (bSeed == false && iter<20) {
+   while (bSeed == false ) {
         /*
          * Crear un vec3b con solo las seeds, modificar el de segment
          * y dejar esos vectores solos.
@@ -78,7 +79,7 @@ void seed(const Mat &original, int height, int width, int offset) {
 	            seedY.push_back(rand_Y);
 	        }
     	}
-        iter++;
+        //iter++;
     }
     //cout<<"Termina seed"<<endl;
 
