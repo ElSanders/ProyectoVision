@@ -16,6 +16,7 @@ Nathalie Vichis Lagunes A01364838
 #include <thread>
 #include <mutex>
 #include <math.h>
+
 using namespace cv;
 using namespace std;
 using namespace std::chrono_literals;
@@ -26,9 +27,11 @@ vector <float> n20,n02,n11,fi1,fi2;
 Vec3b pinto;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria,mira;
+
 char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big;
+
 const float maxApplefi1   = 0.64667,     maxApplefi2   = 3.71094,
             maxPearfi1    = -1.97895e-05,maxPearfi2    = 1.82586,
             maxBanannafi1 = 5.36383e-05, maxBanannafi2 = 7.4782e-05,
@@ -63,14 +66,11 @@ void seed(const Mat &original, int height, int width, int offset) {
     //int iter = 0;
    // while (bSeed == false && iter<20) {
    while (bSeed == false ) {
-        /*
-         * Crear un vec3b con solo las seeds, modificar el de segment
-         * y dejar esos vectores solos.
-         */
+
         // Getting rand number in image size range
             rand_X = rand() % width + offset; // Offset it is the initial value for random
             rand_Y = rand() % height;
-        //cout<<"Se revisa fondo"<<endl;
+
         if(rand_Y<original.rows-2 && rand_X<original.cols-2 && rand_X>-1 && rand_Y>-1){
 	        if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
 	            //cout << "Esto es una semilla" << endl;
@@ -79,10 +79,7 @@ void seed(const Mat &original, int height, int width, int offset) {
 	            seedY.push_back(rand_Y);
 	        }
     	}
-        //iter++;
     }
-    //cout<<"Termina seed"<<endl;
-
 }
 
 bool inBounds(float val, float min, float max){
@@ -94,7 +91,7 @@ bool inBounds(float val, float min, float max){
 //Función para identificar objetos
 void identify(float fi1, float fi2){
 
-    /*if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
+    if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
         cout<<"Manzana reconocida"<<endl;
         small=1;
     }
@@ -102,36 +99,41 @@ void identify(float fi1, float fi2){
         cout<<"Pera reconocida"<<endl;
         small=2;
     }
-    else if(inBounds(fi1,minBanannafi1,maxBanannafi1) && inBounds(fi2,minBanannafi2,maxBanannafi2)){
+    if(inBounds(fi1,minBanannafi1,maxBanannafi1) && inBounds(fi2,minBanannafi2,maxBanannafi2)){
         cout<<"Plátano reconocido"<<endl;
         big=1;
     }
     else if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) && inBounds(fi2,minCarrotfi2,maxCarrotfi2)){
-        cout<<"Pera reconocida"<<endl;
+        cout<<"zanahoria reconocida"<<endl;
         big=2;
-    }*/
+    }
     
     //------MIRA---pintar cuadrante
-    
-    
+    int x, y = 0;
+    cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
     if ((small == 1) && (big ==1)){ // manzana y platano
-    
-        circle (mira,Point(290,131),8,(0,0,255),-1);
+
+        x = 290; y = 131;
+        //circle (mira,Point(290,131),50,(0,0,255),-1);
     }
     
     if ((small == 2) && (big ==1)){ // pera y platano
-    
-        circle (mira,Point(290,203),8,(0,0,255),-1);
+
+        x = 290; y = 203;
+        //circle (mira,Point(290,203),50,(0,0,255),-1);
     }
     if ((small == 1) && (big ==2)){ // manzana y zanahoria
-    
-         circle (mira,Point(200,135),8,(0,0,255),-1);
+
+        x = 200; y = 135;
+         //circle (mira,Point(200,135),50,(0,0,255),-1);
     }
     if ((small == 2) && (big ==2)){ // pera y zanahoria
-     
-        circle (mira,Point(223,199),8,(0,0,255),-1);
-    
+
+        x = 223; y = 199;
+        //circle (mira,Point(223,199),50,(0,0,255),-1);
     }
+
+    circle (mira,Point(x,y),25,(0,0,255),-1);
     imshow("Mira", mira); // falta borrar el circulo para pintarlo en otro lado
 
 }
@@ -263,9 +265,9 @@ void busca(){
     //cout<<"Se obtiene size"<<endl;
     int height = s.height;
     int width = s.width;
-       
+
         //inicializar momentos
-       
+
         m00.push_back(0);
         m01.push_back(0);
         m10.push_back(0);
@@ -273,72 +275,116 @@ void busca(){
         m02.push_back(0);
         m11.push_back(0);
          // doble o falla el segundo centroide
-         
+
         m00.push_back(0);
         m01.push_back(0);
         m10.push_back(0);
         m20.push_back(0);
         m02.push_back(0);
         m11.push_back(0);
-        
-        
+
+
         //cout<<"Empieza seed"<<endl;
         // Figura izquierda
         seed(segmented, height, width/2, 0);
-        //cout<<"Termina seed"<<endl;               
-        segment(currentImage,segmented);  
-        //cout <<"Termina segment"<<endl;      
+        //cout<<"Termina seed"<<endl;
+        segment(currentImage,segmented);
+        //cout <<"Termina segment"<<endl;
         cout << "Area 1 = " << m00[0] <<endl;
+
             //centroide figura 1
         cx1 = (m10[0]/(m00[0]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy1 = (m01[0]/(m00[0]+ 1e-5)); // float ?
         cout << "suma X " << m10[0] <<endl;
         cout << "suma Y " << m01[0] <<endl;
         cout << "CX " << cx1 <<endl;
-        cout << "CY " << cy1 <<endl; 
+        cout << "CY " << cy1 <<endl;
         circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
-        
+
+
             // momentos segundo orden
         mu20.push_back(m20[0] - (cx1*m10[0]));
         mu02.push_back(m02[0] - (cy1*m01[0])) ;
         mu11.push_back(m11[0] - (cy1*m10[0])) ;
-        
-        //momentos normalizados 
+
+    // ************************************** /Angulo de la figura 1\ **************************************
+        double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+        cout << "Angle is " << theta << endl;
+        double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowHeadY = tan(theta) * arrowHeadX;
+
+        double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowTailY = tan(theta) * arrowTailX;
+
+        // Drawing line
+        line(segmented, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
+                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
+        // Drawing line
+        line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
+
+        //momentos normalizados
         n20.push_back((float) (mu20[0]/pow(m00[0],2)));
         n02.push_back((float) (mu02[0]/pow(m00[0],2)));
         n11.push_back((float) (mu11[0]/pow(m00[0],2)));
-        
-        // fi 1 y fi 2 
+
+        // fi 1 y fi 2
         fi1.push_back(n20[0]+n02[0]+ 1e-5);
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
         cout << "Fi1  " << fi1[0] <<endl;
         cout << "Fi2  " << fi2[0] <<endl;
-        identify(fi1[0],fi2[0]);     
+        identify(fi1[0],fi2[0]);
         double F = 2*log(fi1.back()*fi2.back());
-        cout<<"F: "<<F<<endl;        
-        N++; 
-        
-   
+        cout<<"F: "<<F<<endl;
+        N++;
+
+
         //Figura derecha
         seed(segmented, height, width, width/2);
-        segment(currentImage,segmented);          
+        segment(currentImage,segmented);
         cout << "Area 2 = " << m00[1] <<endl;
+
               //centroide figura 2
         cx2 = (m10[1]/(m00[1]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy2 = (m01[1]/(m00[1]+ 1e-5)); // float ?
         cout << "suma X " << m10[1] <<endl;
         cout << "suma Y " << m01[1] <<endl;
         cout << "CX " << cx2 <<endl;
-        cout << "CY " << cy2 <<endl; 
-        circle (segmented,Point(cx2,cy2),4,(255,0,0),-1); 
-       
-        
-        
+        cout << "CY " << cy2 <<endl;
+        circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);
+
+
+
         // momentos segundo orden
         mu20.push_back(m20[1] - (cx2*m10[1]));
         mu02.push_back(m02[1] - (cy2*m01[1])) ;
         mu11.push_back(m11[1] - (cy2*m10[1])) ;
-        
+
+
+        // ************************************** /Angulo de la figura 2\ **************************************
+        double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+        cout << "Angle is " << theta2 << endl;
+
+        double arrowHeadX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowHeadY2 = tan(theta2) * arrowHeadX2;
+
+        double arrowTailX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowTailY2 = tan(theta2) * arrowTailX2;
+
+        // Drawing line
+        line(segmented, Point(cx2-arrowTailX2, cy2 - arrowTailY2), Point(cx2+arrowHeadX2,
+                                                                       cy2+arrowHeadY2), (50, 50, 255), 3);
+        // Drawing line
+        line(segmented, Point(cx2+arrowTailX2, cy2 - arrowTailY2), Point(cx2-arrowHeadX2,
+                                                                         cy2+arrowHeadY2), (50, 50, 255), 3);
+
+        // ********************************************************* PROVISIONAL PARA MIRA HASTA QUE IDENTIFIQUE BIEN
+        // Getting size of image
+        // Mira es 550 x 360
+        int centerWMira = 550/2 - 20;
+        int centerHMira = 360/2 - 15;
+        arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2, centerHMira+arrowTailY2), (50, 50, 255), 3);
+
         //momentos normalizados
         n20.push_back((float) (mu20[1]/pow(m00[1],2)));
         n02.push_back((float) (mu02[1]/pow(m00[1],2)));
@@ -435,7 +481,6 @@ int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
     bool clicked = false, run = true;
-    mira = imread("mira.jpg",IMREAD_COLOR); 
     
     //currentImage.copyTo(segmented);
     //inRange(currentImage, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),segmented);
@@ -450,6 +495,7 @@ int main(int argc, char *argv[]){
         if(!clicked){
      //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
      camera >> currentImage;
+    mira = imread("mira.jpg",IMREAD_COLOR);
    
         
         }
