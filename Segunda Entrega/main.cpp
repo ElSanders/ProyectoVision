@@ -15,6 +15,7 @@ Nathalie Vichis Lagunes A01364838
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <math.h>
 using namespace cv;
 using namespace std;
 using namespace std::chrono_literals;
@@ -79,7 +80,7 @@ void seed(const Mat &original, int height, int width, int offset) {
     	}
         iter++;
     }
-    cout<<"Termina seed"<<endl;
+    //cout<<"Termina seed"<<endl;
 
 }
 
@@ -92,7 +93,7 @@ bool inBounds(float val, float min, float max){
 //Función para identificar objetos
 void identify(float fi1, float fi2){
 
-    if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
+    /*if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
         cout<<"Manzana reconocida"<<endl;
         small=1;
     }
@@ -107,7 +108,7 @@ void identify(float fi1, float fi2){
     else if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) && inBounds(fi2,minCarrotfi2,maxCarrotfi2)){
         cout<<"Pera reconocida"<<endl;
         big=2;
-    }
+    }*/
     
     //------MIRA---pintar cuadrante
     
@@ -307,13 +308,13 @@ void busca(){
         n11.push_back((float) (mu11[0]/pow(m00[0],2)));
         
         // fi 1 y fi 2 
-        fi1.push_back(n20[0]+n02[0]);
-        fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2));
+        fi1.push_back(n20[0]+n02[0]+ 1e-5);
+        fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
         cout << "Fi1  " << fi1[0] <<endl;
         cout << "Fi2  " << fi2[0] <<endl;
         identify(fi1[0],fi2[0]);     
-        
-        
+        double F = 2*log(fi1.back()*fi2.back());
+        cout<<"F: "<<F<<endl;        
         N++; 
         
    
@@ -349,7 +350,8 @@ void busca(){
         cout << "Fi1  " << fi1[1] <<endl;
         cout << "Fi2  " << fi2[1] <<endl;
         identify(fi1[1],fi2[1]);
-         
+        F = 2*log(fi1.back()*fi2.back());
+        cout<<"F: "<<F<<endl;  
         N=1;   
         
         m00.clear();
