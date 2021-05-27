@@ -672,7 +672,7 @@ int main(int argc, char *argv[]){
                     seedX.clear();
                     printf("\033[2J");
                     printf("\033[%d;%dH", 0, 0);
-                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)YIQ\ne)Segmentation\n";
+                    cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)YIQ\ne)Segmentation\nf)Barra\n";
                     cin>>sel;
                     break;
                 case 'x':
