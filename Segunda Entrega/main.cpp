@@ -28,7 +28,7 @@ Vec3b pinto;
 int p =0;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria,mira;
-
+bool debug = false; 
 char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big;
@@ -64,8 +64,7 @@ void seed(const Mat &original, int height, int width, int offset) {
     fondo[0]=0;
     fondo[1]=0;
     fondo[2]=0;
-    //int iter = 0;
-   // while (bSeed == false && iter<20) {
+
    while (bSeed == false ) {
 
         // Getting rand number in image size range
@@ -74,7 +73,6 @@ void seed(const Mat &original, int height, int width, int offset) {
 
         if(rand_Y<original.rows-2 && rand_X<original.cols-2 && rand_X>-1 && rand_Y>-1){
 	        if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
-	            //cout << "Esto es una semilla" << endl;
 	            bSeed = true;
 	            seedX.push_back(rand_X);
 	            seedY.push_back(rand_Y);
@@ -97,7 +95,7 @@ void identify(float fi1, float fi2){
         small=1;
     }
    if(inBounds(fi1,minPearfi1,maxPearfi1) ){
-        cout<<"Pera reconocida"<<endl;
+        cout<<"Cereza reconocida"<<endl;
         small=2;
     }
     if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
@@ -105,33 +103,24 @@ void identify(float fi1, float fi2){
         big=1;
     }
     if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
-        cout<<"zanahoria reconocida"<<endl;
+        cout<<"Zanahoria reconocida"<<endl;
         big=2;
     }
     
     //------MIRA---pintar cuadrante
     int x, y ;
-    //cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
+    if(debug)cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
     if ((small == 1) && (big ==1)){ // manzana y platano
-
         x = 290; y = 131;
-        //circle (mira,Point(290,131),50,(0,0,255),-1);
     }
-    
     if ((small == 2) && (big ==1)){ // pera y platano
-
         x = 290; y = 203;
-        //circle (mira,Point(290,203),50,(0,0,255),-1);
     }
     if ((small == 1) && (big ==2)){ // manzana y zanahoria
-
         x = 200; y = 135;
-         //circle (mira,Point(200,135),50,(0,0,255),-1);
     }
     if ((small == 2) && (big ==2)){ // pera y zanahoria
-
         x = 223; y = 199;
-        //circle (mira,Point(223,199),50,(0,0,255),-1);
     }
 
     circle (mira,Point(x,y),25,(0,0,255),-1);
@@ -147,9 +136,8 @@ void yiq(const Vec3b &pix,unsigned char &Y, unsigned char &I, unsigned char &Q){
 }
 
 void paint(const Mat &original, Mat &segImg,int x, int y){
-    //cout<<"Empieza paint"<<endl;
+    if(debug)cout<<"Empieza paint"<<endl;
     
-    //Vec3b pinto;  // pintar de colores
     pinto[0] = 254 *(N-2)*(N-3);
     pinto[1] = 200 *(N-1)*(N-3);
     pinto[2] = 200 *(N-2)*(N-1);
@@ -188,12 +176,11 @@ void paint(const Mat &original, Mat &segImg,int x, int y){
         seedX.push_back(x);
         seedY.push_back(y-1);
     }
-//cout<<"Termina paint"<<endl;
+    if(debug)cout<<"Termina paint"<<endl;
 }
 
 void segment(const Mat &original, Mat &segImg){
-    //original.copyTo(segImg);
-    //cout<<"Empieza segment"<<endl;
+    if(debug)cout<<"Empieza segment"<<endl;
     int x , y;
 
     while(!seedX.empty()){
@@ -201,10 +188,9 @@ void segment(const Mat &original, Mat &segImg){
         y = seedY.back();
         seedX.pop_back();
         seedY.pop_back();
-        //if(y<original.rows-2 && x<original.cols-2)
-            paint(original,segImg,x,y);
+        paint(original,segImg,x,y);
     }
-    //cout<<"Termina segment"<<endl;
+    if(debug)cout<<"Termina segment"<<endl;
 }
 
 //Cambia una imágen a escala de grises
@@ -241,8 +227,6 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
     switch (event)
     {
         case EVENT_LBUTTONDOWN:
-            //printf("\033[2J");
-            //printf("\033[%d;%dH", 0, 0);
             cout << "X: " << x << " Y: "<< y <<endl;
             cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
             cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
@@ -260,11 +244,11 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
 
 // -------------------------------------------------------------------------------------------------------
 void busca(){
-    //cout<<"Empieza busca"<<endl;
+    if(debug)cout<<"Empieza busca"<<endl;
     // Getting size of image
     
     Size s = segmented.size();
-    //cout<<"Se obtiene size"<<endl;
+    if(debug)cout<<"Se obtiene size"<<endl;
     int height = s.height;
     int width = s.width;
 
@@ -286,21 +270,21 @@ void busca(){
         m11.push_back(0);
 
 
-        //cout<<"Empieza seed"<<endl;
+        if(debug)cout<<"Empieza seed"<<endl;
         // Figura izquierda
         seed(segmented, height, width/2, 0);
-        //cout<<"Termina seed"<<endl;
+        if(debug)cout<<"Termina seed"<<endl;
         segment(currentImage,segmented);
-        //cout <<"Termina segment"<<endl;
-        //cout << "Area 1 = " << m00[0] <<endl;
+        if(debug)cout <<"Termina segment"<<endl;
+        if(debug)cout << "Area 1 = " << m00[0] <<endl;
 
-            //centroide figura 1
+        //centroide figura 1
         cx1 = (m10[0]/(m00[0]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy1 = (m01[0]/(m00[0]+ 1e-5)); // float ?
-       // cout << "suma X " << m10[0] <<endl;
-       // cout << "suma Y " << m01[0] <<endl;
-      //  cout << "CX " << cx1 <<endl;
-        //cout << "CY " << cy1 <<endl;
+        if(debug)cout << "suma X " << m10[0] <<endl;
+        if(debug)cout << "suma Y " << m01[0] <<endl;
+        if(debug)cout << "CX " << cx1 <<endl;
+        if(debug)cout << "CY " << cy1 <<endl;
         circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
 
 
@@ -309,9 +293,9 @@ void busca(){
         mu02.push_back(m02[0] - (cy1*m01[0])) ;
         mu11.push_back(m11[0] - (cy1*m10[0])) ;
 
-    // ************************************** /Angulo de la figura 1\ **************************************
+        // ************************************** /Angulo de la figura 1\ **************************************
         double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        //cout << "Angle is " << theta << endl;
+        if(debug)cout << "Angle is " << theta << endl;
         double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
         double arrowHeadY = tan(theta) * arrowHeadX;
 
@@ -333,17 +317,14 @@ void busca(){
         // fi 1 y fi 2
         fi1.push_back(n20[0]+n02[0]+ 1e-5);
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
-        //cout << "Fi1  " << fi1[0] <<endl;
-        //cout << "Fi2  " << fi2[0] <<endl;
+        if(debug)cout << "Fi1  " << fi1[0] <<endl;
+        if(debug)cout << "Fi2  " << fi2[0] <<endl;
         identify(fi1[0],fi2[0]);
-        double F = 2*log(fi1.back()*fi2.back());
-        //cout<<"F: "<<F<<endl;
         // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura 
         
         fis1.push_back(fi1[0]);
         fis2.push_back(fi2[0]);
-       // cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
-        //p++;
+        if(debug)cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
         
         N++;
 
@@ -351,15 +332,15 @@ void busca(){
         //Figura derecha
         seed(segmented, height, width, width/2);
         segment(currentImage,segmented);
-      //  cout << "Area 2 = " << m00[1] <<endl;
+        if(debug)cout << "Area 2 = " << m00[1] <<endl;
 
-              //centroide figura 2
+        //centroide figura 2
         cx2 = (m10[1]/(m00[1]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy2 = (m01[1]/(m00[1]+ 1e-5)); // float ?
-       // cout << "suma X " << m10[1] <<endl;
-        //cout << "suma Y " << m01[1] <<endl;
-        //cout << "CX " << cx2 <<endl;
-        //cout << "CY " << cy2 <<endl;
+        if(debug)cout << "suma X " << m10[1] <<endl;
+        if(debug)cout << "suma Y " << m01[1] <<endl;
+        if(debug)cout << "CX " << cx2 <<endl;
+        if(debug)cout << "CY " << cy2 <<endl;
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);
 
 
@@ -372,7 +353,7 @@ void busca(){
 
         // ************************************** /Angulo de la figura 2\ **************************************
         double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        //cout << "Angle is " << theta2 << endl;
+        if(debug)cout << "Angle is " << theta2 << endl;
 
         double arrowHeadX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
         double arrowHeadY2 = tan(theta2) * arrowHeadX2;
@@ -403,11 +384,9 @@ void busca(){
         fi1.push_back(n20[1]+n02[1]);
         fi2.push_back(pow((n20[1]-n02[1]),2)+4*pow(n11[1],2));
 
-        //cout << "Fi1  " << fi1[1] <<endl;
-       // cout << "Fi2  " << fi2[1] <<endl;
+        if(debug)cout << "Fi1  " << fi1[1] <<endl;
+        if(debug)cout << "Fi2  " << fi2[1] <<endl;
         identify(fi1[1],fi2[1]);
-        F = 2*log(fi1.back()*fi2.back());
-        //cout<<"F: "<<F<<endl;  
         N=1;   
         
         m00.clear();
@@ -423,7 +402,7 @@ void busca(){
         n02.clear();
         fi1.clear();
         fi2.clear();
-        //cout<<"Termina busca"<<endl;
+        if(debug)cout<<"Termina busca"<<endl;
 }
 
 int buscaWrapped()
@@ -465,21 +444,11 @@ void onTrackbar(int, void*){
     //Función vacía para los trackbars
 }
 
-/*void autoBin (Mat original, Mat roja){
-    Mat mask;
-    inRange(original, Scalar(0,0,190), Scalar(10,10,255),mask);    
-    currentImage.copyTo(roja,mask);
-}*/
 
 void separar(const Mat &original, Mat &editRGB){
   Mat maskRGB;
   //Reset image
   editRGB = Mat(0, 0, 0, Scalar( 0,0,0));
-    
-  //Filtro y máscara
-  // Para foto
-  //inRange(original, Scalar(0,0,130), Scalar(10,10,255),maskRGB); 
-  // Para Video OJO -> ajustar limites de color segun su tinta 
   inRange(original, Scalar(0,0,125), Scalar(90,90,255),maskRGB);     
   original.copyTo(editRGB,maskRGB);
   
@@ -490,21 +459,13 @@ int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
     bool clicked = false, run = true;
-    
-    //currentImage.copyTo(segmented);
-    //inRange(currentImage, Scalar(minB,minG,minR), Scalar(maxB,maxG,maxR),segmented);
-   
-    
 
     while (run)
     {
-        
-        //currentImage.copyTo(segmented);
-
         if(!clicked){
-     //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
-     camera >> currentImage;
-    mira = imread("mira2.jpg",IMREAD_COLOR);
+        //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
+        camera >> currentImage;
+        mira = imread("mira2.jpg",IMREAD_COLOR);
    
         
         }
@@ -513,21 +474,20 @@ int main(int argc, char *argv[]){
         {
             switch(sel){
                 case 'a':
-                    cout << "a";
+                    if(debug)cout << "a";
                     namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
                     imshow("Camera", currentImage);
-                    //imshow("Camera", segmented);
                     break;
                 case 'b':
-                    cout << "b";
+                    if(debug)cout << "b";
                     namedWindow("Grayscale");
                     setMouseCallback("Grayscale", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     imshow("Grayscale",grayImage);
                     break;
                 case 'c':
-                    cout << "c";
+                    if(debug)cout << "c";
                     namedWindow("Binarized");
                     setMouseCallback("Binarized", mouseClicked);
                     rgbToBW(currentImage,grayImage);
@@ -536,14 +496,14 @@ int main(int argc, char *argv[]){
                     imshow("Binarized",binaryImage);
                     break;
                 case 'd':
-                    cout << "d";
+                    if(debug)cout << "d";
                     namedWindow("YIQ");
                     setMouseCallback("YIQ", mouseClicked);
                     makeYIQ(currentImage,yiqImage);
                     imshow("YIQ",yiqImage);
                     break;
                 case 'e':
-                    cout << "e";
+                    if(debug)cout << "e";
                     separar(currentImage, segmented);
                     namedWindow("Original");  
                     try{
@@ -576,10 +536,6 @@ int main(int argc, char *argv[]){
                     printf("\033[%d;%dH", 0, 0);
                     cout<<"Select an image:\na)Camera\nb)Grayscale\nc)Binarized\nd)YIQ\ne)Segmentation\n";
                     cin>>sel;
-                    break;
-                case 'r':
-                    //seed(segmented);
-                    segment(currentImage,segmented);
                     break;
                 case 'x':
                     fis1.clear();
