@@ -364,7 +364,7 @@ void busca(){
 
 
         // ************************************** /Angulo de la figura 1\ **************************************
-        if (isLarge) {
+        //if (isLarge) {
             double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
             if(debug)cout << "Angle is " << theta << endl;
             double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
@@ -381,6 +381,7 @@ void busca(){
                                                                            cy1+arrowHeadY), (255, 100, 100), 3);
 
 
+           if (isLarge) {
             arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX,
                                                                      centerHMira+arrowTailY), (255, 100, 100), 3);
         }
@@ -421,7 +422,7 @@ void busca(){
         graph(fi1[1], fi2[1]);
         N=1;
 
-        if (isLarge){
+       // if (isLarge){
             // ************************************** /Angulo de la figura 2\ **************************************
             double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
             if(debug)cout << "Angle is " << theta2 << endl;
@@ -439,6 +440,7 @@ void busca(){
             line(segmented, Point(cx2+arrowTailX2, cy2 - arrowTailY2), Point(cx2-arrowHeadX2,
                                                                              cy2+arrowHeadY2), (255, 100, 100), 3);
 
+        if (isLarge) {
             arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2,
                                                                      centerHMira+arrowTailY2), (255, 100, 100), 3);
         }
