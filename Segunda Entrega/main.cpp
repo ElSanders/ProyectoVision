@@ -27,7 +27,7 @@ vector <float> n20,n02,n11,fi1,fi2,fis1,fis2;
 Vec3b pinto;
 int p =0;
 VideoCapture camera;
-Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria,mira;
+Mat currentImage, grayImage, binaryImage, yiqImage, segmented, binaria, mira, phiGraph;
 bool debug = false; 
 char sel = 'e';
 int N = 1;
@@ -46,6 +46,40 @@ const float maxApplefi1   = .13,
 
 bool leftRight = false; // left is false, right is true
 
+
+// ************************** /Graph\ **************************
+/*
+ * Funcion para graficar las phi
+ * Parametros:
+ *      phi1: phi1 de la figura
+ *      phi2: phi2 de la figura
+ *
+ */
+void graph(float phi1, float phi2){
+    // Size 841 x 480; 425 -> eje x
+    // Distancia entre grid horizontal => 0.05 -> 90 px
+    // Distancia entre grid vertical => 0.02 -> -35 px
+    // 0.1 = 242, 425
+    // 0.05 = 152, 425
+    try {
+        float dx = phi1 / 0.05;
+        int iDxPx = dx * 90 + 90;
+
+        float dy = phi2 / 0.02;
+        int iDyPx = 425 - dy * 35;
+
+        cout << "iDXPX = " << iDxPx << "   Phi1 = " << phi1 << endl;
+        cout << "iDYPX = " << iDyPx << "   Phi2 = " << phi2 << endl;
+
+        circle(phiGraph, Point(iDxPx, iDyPx), 4, (255, 0, 0), -1);
+        imshow("Phi Graph", phiGraph);
+        throw(0);
+    }
+    catch(int zero) {
+        cout << endl;
+    }
+
+}
 
 // ************************** /Seed\ **************************
 /*
@@ -318,6 +352,7 @@ void busca(){
         if(debug)cout << "Fi1  " << fi1[0] <<endl;
         if(debug)cout << "Fi2  " << fi2[0] <<endl;
         bool isLarge = identify(fi1[0],fi2[0]);
+        graph(fi1[0], fi2[0]);
 
         // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura
         fis1.push_back(fi1[0]);
@@ -383,6 +418,7 @@ void busca(){
         if(debug)cout << "Fi1  " << fi1[1] <<endl;
         if(debug)cout << "Fi2  " << fi2[1] <<endl;
         isLarge = identify(fi1[1],fi2[1]);
+        graph(fi1[1], fi2[1]);
         N=1;
 
         if (isLarge){
@@ -612,9 +648,15 @@ int main(int argc, char *argv[]){
     while (run)
     {
         if(!clicked){
-        //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
+        // "platCer.jpeg"
+        // "rojo2.jpg"
+        // "zanCer.jpeg"
+        // "platCer.jpeg"
+        string imageFruit = "platCer.jpeg";
+        //currentImage = imread(imageFruit,IMREAD_COLOR);
         camera >> currentImage;
         mira = imread("mira2.jpg",IMREAD_COLOR);
+        phiGraph = imread("phiGraph.jpeg", IMREAD_COLOR);
 
         }
         
@@ -653,26 +695,26 @@ int main(int argc, char *argv[]){
                 case 'f':
                     if(debug)cout << "e";
                     separar(currentImage, segmented);
-                    namedWindow("Original");  
+                    namedWindow("Original");
                     try{
                         buscaWrapped2();
                     }
                     catch(runtime_error& e){
                         cout<<"Timed out, trying again."<<endl;
-                    }                  
+                    }
                     imshow("Original",currentImage);
                     imshow("Segmented",segmented);
                     break;
                 case 'e':
                     if(debug)cout << "e";
                     separar(currentImage, segmented);
-                    namedWindow("Original");  
+                    namedWindow("Original");
                     try{
                         buscaWrapped();
                     }
                     catch(runtime_error& e){
                         cout<<"Timed out, trying again."<<endl;
-                    }                  
+                    }
                     imshow("Original",currentImage);
                     imshow("Segmented",segmented);
                     break;
