@@ -28,18 +28,24 @@ Vec3b pinto;
 VideoCapture camera;
 Mat currentImage,grayImage,binaryImage,yiqImage,segmented, binaria,mira;
 
+bool verbose = false; 
+
 char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big;
 
-const float maxApplefi1   = 0.64667,     maxApplefi2   = 3.71094,
-            maxPearfi1    = -1.97895e-05,maxPearfi2    = 1.82586,
-            maxBanannafi1 = 5.36383e-05, maxBanannafi2 = 7.4782e-05,
-            maxCarrotfi1  = 1.01629e-05, maxCarrotfi2  = 1.45773,
-            minApplefi1   = 0.0887028,   minApplefi2   = 6.23816e-05, 
-            minPearfi1    = -2.10041e-05,minPearfi2    = 1.82586,
-            minBanannafi1 = 4.48383e-05, minBanannafi2 = 0.869049,
-            minCarrotfi1  = 7.15575e-06, minCarrotfi2  = 1.44322;
+const float maxApplefi1   = 0.13,     minApplefi1   = 0.08,
+            maxAppleF   = -22 ,       minAppleF   = -25, 
+            maxPearfi1    = 0.16,     minPearfi1    = 0.09,
+            maxPearF    = -15.6,      minPearF   = -16.4,
+            maxBanannafi1 = 0.24,     minBanannafi1 = 0.18,
+            maxBanannaF = -9.7,       minBanannaF = -9.9,
+            maxCarrotfi1  = 0.4,      minCarrotfi1  = 0.25,
+            maxCarrotF  = -5,          minCarrotF = -5.18;
+            //Max pera:-15.6  Min pera:-16.4
+            //Max manz:-22    Min manz: -25
+            //Max plat:-9.7       Min plat: -9.9
+            //Max zana:-5     Min zana:-5.18
 
 bool leftRight = false; // left is false, right is true
 
@@ -89,28 +95,48 @@ bool inBounds(float val, float min, float max){
 }
 
 //Función para identificar objetos
-void identify(float fi1, float fi2){
-
-    if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(fi2,minApplefi2,maxApplefi2)){
+void identify(float fi1, float F){
+    //Max pera:-15.6  Min pera:-16.4
+    //Max manz:-22    Min manz: -25
+    //Max plat:-9.7       Min plat: -9.9
+    //Max zana:-5     Min zana:-5.18
+    if(inBounds(fi1,minApplefi1,maxApplefi1) && inBounds(F,minAppleF,maxAppleF)){
         cout<<"Manzana reconocida"<<endl;
         small=1;
     }
-    else if(inBounds(fi1,minPearfi1,maxPearfi1) && inBounds(fi2,minPearfi2,maxPearfi2)){
+    else if(inBounds(fi1,minPearfi1,maxPearfi1) && inBounds(F,minPearF,maxPearF)){
         cout<<"Pera reconocida"<<endl;
         small=2;
     }
-    if(inBounds(fi1,minBanannafi1,maxBanannafi1) && inBounds(fi2,minBanannafi2,maxBanannafi2)){
+    if(inBounds(fi1,minBanannafi1,maxBanannafi1) && inBounds(F,minBanannaF,maxBanannaF)){
         cout<<"Plátano reconocido"<<endl;
         big=1;
     }
-    else if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) && inBounds(fi2,minCarrotfi2,maxCarrotfi2)){
+    else if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) && inBounds(F,minCarrotF,maxCarrotF)){
         cout<<"zanahoria reconocida"<<endl;
         big=2;
     }
-    
+/*
+    if(inBounds(F,minAppleF,maxAppleF)){
+        cout<<"Manzana reconocida"<<endl;
+        small=1;
+    }
+    else if( inBounds(F,minPearF,maxPearF)){
+        cout<<"Pera reconocida"<<endl;
+        small=2;
+    }
+    if(inBounds(F,minBanannaF,maxBanannaF)){
+        cout<<"Plátano reconocido"<<endl;
+        big=1;
+    }
+    else if(inBounds(F,minCarrotF,maxCarrotF)){
+        cout<<"zanahoria reconocida"<<endl;
+        big=2;
+    }*/
+
     //------MIRA---pintar cuadrante
     int x, y = 0;
-    cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
+    if(verbose)cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
     if ((small == 1) && (big ==1)){ // manzana y platano
 
         x = 290; y = 131;
@@ -242,9 +268,9 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
         case EVENT_LBUTTONDOWN:
             //printf("\033[2J");
             //printf("\033[%d;%dH", 0, 0);
-            cout << "X: " << x << " Y: "<< y <<endl;
-            cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
-            cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
+            if(verbose) cout << "X: " << x << " Y: "<< y <<endl;
+            if(verbose)cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
+            if(verbose)cout << "Y: " << (int)y_yiq << " I: " << (int)i_yiq<< " Q: " << (int)q_yiq<<endl;
             if(sel == 'e'){
                 seedX.push_back(x);
                 seedY.push_back(y);
@@ -290,15 +316,15 @@ void busca(){
         //cout<<"Termina seed"<<endl;
         segment(currentImage,segmented);
         //cout <<"Termina segment"<<endl;
-        cout << "Area 1 = " << m00[0] <<endl;
+        if(verbose)cout << "Area 1 = " << m00[0] <<endl;
 
             //centroide figura 1
         cx1 = (m10[0]/(m00[0]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy1 = (m01[0]/(m00[0]+ 1e-5)); // float ?
-        cout << "suma X " << m10[0] <<endl;
-        cout << "suma Y " << m01[0] <<endl;
-        cout << "CX " << cx1 <<endl;
-        cout << "CY " << cy1 <<endl;
+        if(verbose)cout << "suma X " << m10[0] <<endl;
+        if(verbose)cout << "suma Y " << m01[0] <<endl;
+        if(verbose)cout << "CX " << cx1 <<endl;
+        if(verbose)cout << "CY " << cy1 <<endl;
         circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
 
 
@@ -309,7 +335,7 @@ void busca(){
 
     // ************************************** /Angulo de la figura 1\ **************************************
         double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        cout << "Angle is " << theta << endl;
+        if(verbose)cout << "Angle is " << theta << endl;
         double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
         double arrowHeadY = tan(theta) * arrowHeadX;
 
@@ -331,26 +357,26 @@ void busca(){
         // fi 1 y fi 2
         fi1.push_back(n20[0]+n02[0]+ 1e-5);
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
-        cout << "Fi1  " << fi1[0] <<endl;
-        cout << "Fi2  " << fi2[0] <<endl;
-        identify(fi1[0],fi2[0]);
+        if(verbose)cout << "Fi1  " << fi1[0] <<endl;
+        if(verbose)cout << "Fi2  " << fi2[0] <<endl;
         double F = 2*log(fi1.back()*fi2.back());
-        cout<<"F: "<<F<<endl;
+        identify(fi1[0],F);
+        if(verbose)cout<<"Left F: "<<F<<endl;
         N++;
 
 
         //Figura derecha
         seed(segmented, height, width, width/2);
         segment(currentImage,segmented);
-        cout << "Area 2 = " << m00[1] <<endl;
+        if(verbose)cout << "Area 2 = " << m00[1] <<endl;
 
               //centroide figura 2
         cx2 = (m10[1]/(m00[1]+ 1e-5)); //add 1e-5 to avoid division by zero
         cy2 = (m01[1]/(m00[1]+ 1e-5)); // float ?
-        cout << "suma X " << m10[1] <<endl;
-        cout << "suma Y " << m01[1] <<endl;
-        cout << "CX " << cx2 <<endl;
-        cout << "CY " << cy2 <<endl;
+        if(verbose)cout << "suma X " << m10[1] <<endl;
+        if(verbose)cout << "suma Y " << m01[1] <<endl;
+        if(verbose)cout << "CX " << cx2 <<endl;
+        if(verbose)cout << "CY " << cy2 <<endl;
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);
 
 
@@ -363,7 +389,7 @@ void busca(){
 
         // ************************************** /Angulo de la figura 2\ **************************************
         double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        cout << "Angle is " << theta2 << endl;
+        if(verbose)cout << "Angle is " << theta2 << endl;
 
         double arrowHeadX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
         double arrowHeadY2 = tan(theta2) * arrowHeadX2;
@@ -394,11 +420,11 @@ void busca(){
         fi1.push_back(n20[1]+n02[1]);
         fi2.push_back(pow((n20[1]-n02[1]),2)+4*pow(n11[1],2));
 
-        cout << "Fi1  " << fi1[1] <<endl;
-        cout << "Fi2  " << fi2[1] <<endl;
-        identify(fi1[1],fi2[1]);
+        if(verbose)cout << "Fi1  " << fi1[1] <<endl;
+        if(verbose)cout << "Fi2  " << fi2[1] <<endl;
         F = 2*log(fi1.back()*fi2.back());
-        cout<<"F: "<<F<<endl;  
+        identify(fi1[1],F);
+        if(verbose)cout<<"Right F: "<<F<<endl;  
         N=1;   
         
         m00.clear();
@@ -433,7 +459,7 @@ int buscaWrapped()
 
     {
         std::unique_lock<std::mutex> l(m);
-        if(cond.wait_for(l, 1s) == std::cv_status::timeout) 
+        if(cond.wait_for(l, 0.2s) == std::cv_status::timeout) 
             throw std::runtime_error("Timeout");
     }
 
@@ -471,7 +497,7 @@ void separar(const Mat &original, Mat &editRGB){
   // Para foto
   //inRange(original, Scalar(0,0,130), Scalar(10,10,255),maskRGB); 
   // Para Video OJO -> ajustar limites de color segun su tinta 
-  inRange(original, Scalar(0,0,130), Scalar(90,90,255),maskRGB);     
+  inRange(original, Scalar(0,0,130), Scalar(40,40,255),maskRGB);     
   original.copyTo(editRGB,maskRGB);
   
 }
@@ -504,21 +530,21 @@ int main(int argc, char *argv[]){
         {
             switch(sel){
                 case 'a':
-                    cout << "a";
+                    if(verbose)cout << "a";
                     namedWindow("Camera");
                     setMouseCallback("Camera", mouseClicked);
                     imshow("Camera", currentImage);
                     //imshow("Camera", segmented);
                     break;
                 case 'b':
-                    cout << "b";
+                    if(verbose)cout << "b";
                     namedWindow("Grayscale");
                     setMouseCallback("Grayscale", mouseClicked);
                     rgbToBW(currentImage,grayImage);
                     imshow("Grayscale",grayImage);
                     break;
                 case 'c':
-                    cout << "c";
+                    if(verbose)cout << "c";
                     namedWindow("Binarized");
                     setMouseCallback("Binarized", mouseClicked);
                     rgbToBW(currentImage,grayImage);
@@ -527,14 +553,14 @@ int main(int argc, char *argv[]){
                     imshow("Binarized",binaryImage);
                     break;
                 case 'd':
-                    cout << "d";
+                    if(verbose)cout << "d";
                     namedWindow("YIQ");
                     setMouseCallback("YIQ", mouseClicked);
                     makeYIQ(currentImage,yiqImage);
                     imshow("YIQ",yiqImage);
                     break;
                 case 'e':
-                    cout << "e";
+                    if(verbose)cout << "e";
                     separar(currentImage, segmented);
                     namedWindow("Original");  
                     try{
