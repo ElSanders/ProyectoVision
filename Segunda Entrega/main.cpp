@@ -504,7 +504,7 @@ int main(int argc, char *argv[]){
         if(!clicked){
      //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
      camera >> currentImage;
-    mira = imread("mira.jpg",IMREAD_COLOR);
+    mira = imread("mira2.jpg",IMREAD_COLOR);
    
         
         }
