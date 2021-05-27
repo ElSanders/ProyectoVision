@@ -33,6 +33,8 @@ char sel = 'e';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big;
 
+
+
 const float maxApplefi1   = .13,     
             maxPearfi1    = .17,    
             maxBanannafi1 = 0.24,    
@@ -88,44 +90,52 @@ bool inBounds(float val, float min, float max){
 }
 
 //Función para identificar objetos
-void identify(float fi1, float fi2){
+bool identify(float fi1, float fi2){
+
+    // Bool to identify large figure
+    bool bLargeFigure;
 
     if(inBounds(fi1,minApplefi1,maxApplefi1) ){
         cout<<"Manzana reconocida"<<endl;
         small=1;
+        bLargeFigure = false;
     }
    if(inBounds(fi1,minPearfi1,maxPearfi1) ){
         cout<<"Cereza reconocida"<<endl;
         small=2;
+       bLargeFigure = false;
     }
     if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
         cout<<"Plátano reconocido"<<endl;
         big=1;
+        bLargeFigure = true;
     }
     if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
         cout<<"Zanahoria reconocida"<<endl;
         big=2;
+        bLargeFigure = true;
     }
     
     //------MIRA---pintar cuadrante
     int x, y ;
     if(debug)cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
     if ((small == 1) && (big ==1)){ // manzana y platano
-        x = 290; y = 131;
+        x = 365; y = 135;
     }
-    if ((small == 2) && (big ==1)){ // pera y platano
-        x = 290; y = 203;
+    if ((small == 2) && (big ==1)){ // cherry y platano
+        x = 365; y = 205;
     }
     if ((small == 1) && (big ==2)){ // manzana y zanahoria
-        x = 200; y = 135;
+        x = 285; y = 135;
     }
-    if ((small == 2) && (big ==2)){ // pera y zanahoria
-        x = 223; y = 199;
+    if ((small == 2) && (big ==2)){ // cherry y zanahoria
+        x = 285; y = 205;
     }
 
     circle (mira,Point(x,y),25,(0,0,255),-1);
     imshow("Mira", mira); // falta borrar el circulo para pintarlo en otro lado
 
+    return bLargeFigure;
 }
 
 //Obtiene los valores de YIQ de un pixel RGB
@@ -252,6 +262,10 @@ void busca(){
     int height = s.height;
     int width = s.width;
 
+    // Variables para graficar angulo
+    int centerWMira = 640/2 + 5;
+    int centerHMira = 360/2 - 12;
+
         //inicializar momentos
 
         m00.push_back(0);
@@ -293,22 +307,6 @@ void busca(){
         mu02.push_back(m02[0] - (cy1*m01[0])) ;
         mu11.push_back(m11[0] - (cy1*m10[0])) ;
 
-        // ************************************** /Angulo de la figura 1\ **************************************
-        double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        if(debug)cout << "Angle is " << theta << endl;
-        double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
-        double arrowHeadY = tan(theta) * arrowHeadX;
-
-        double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
-        double arrowTailY = tan(theta) * arrowTailX;
-
-        // Drawing line
-        line(segmented, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
-                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
-        // Drawing line
-        line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
-                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
-
         //momentos normalizados
         n20.push_back((float) (mu20[0]/pow(m00[0],2)));
         n02.push_back((float) (mu02[0]/pow(m00[0],2)));
@@ -319,9 +317,9 @@ void busca(){
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
         if(debug)cout << "Fi1  " << fi1[0] <<endl;
         if(debug)cout << "Fi2  " << fi2[0] <<endl;
-        identify(fi1[0],fi2[0]);
-        // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura 
-        
+        bool isLarge = identify(fi1[0],fi2[0]);
+
+        // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura
         fis1.push_back(fi1[0]);
         fis2.push_back(fi2[0]);
         if(debug)cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
@@ -329,7 +327,30 @@ void busca(){
         N++;
 
 
-        //Figura derecha
+
+        // ************************************** /Angulo de la figura 1\ **************************************
+        if (isLarge) {
+            double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+            if(debug)cout << "Angle is " << theta << endl;
+            double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+            double arrowHeadY = tan(theta) * arrowHeadX;
+
+            double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+            double arrowTailY = tan(theta) * arrowTailX;
+
+            // Drawing line
+            line(segmented, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
+                                                                           cy1+arrowHeadY), (255, 100, 100), 3);
+            // Drawing line
+            line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+                                                                           cy1+arrowHeadY), (255, 100, 100), 3);
+
+
+            arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX,
+                                                                     centerHMira+arrowTailY), (255, 100, 100), 3);
+        }
+
+    //Figura derecha
         seed(segmented, height, width, width/2);
         segment(currentImage,segmented);
         if(debug)cout << "Area 2 = " << m00[1] <<endl;
@@ -344,36 +365,11 @@ void busca(){
         circle (segmented,Point(cx2,cy2),4,(255,0,0),-1);
 
 
-
         // momentos segundo orden
         mu20.push_back(m20[1] - (cx2*m10[1]));
         mu02.push_back(m02[1] - (cy2*m01[1])) ;
         mu11.push_back(m11[1] - (cy2*m10[1])) ;
 
-
-        // ************************************** /Angulo de la figura 2\ **************************************
-        double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        if(debug)cout << "Angle is " << theta2 << endl;
-
-        double arrowHeadX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
-        double arrowHeadY2 = tan(theta2) * arrowHeadX2;
-
-        double arrowTailX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
-        double arrowTailY2 = tan(theta2) * arrowTailX2;
-
-        // Drawing line
-        line(segmented, Point(cx2-arrowTailX2, cy2 - arrowTailY2), Point(cx2+arrowHeadX2,
-                                                                       cy2+arrowHeadY2), (50, 50, 255), 3);
-        // Drawing line
-        line(segmented, Point(cx2+arrowTailX2, cy2 - arrowTailY2), Point(cx2-arrowHeadX2,
-                                                                         cy2+arrowHeadY2), (50, 50, 255), 3);
-
-        // ********************************************************* PROVISIONAL PARA MIRA HASTA QUE IDENTIFIQUE BIEN
-        // Getting size of image
-        // Mira es 550 x 360
-        int centerWMira = 550/2 - 20;
-        int centerHMira = 360/2 - 15;
-        arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2, centerHMira+arrowTailY2), (50, 50, 255), 3);
 
         //momentos normalizados
         n20.push_back((float) (mu20[1]/pow(m00[1],2)));
@@ -386,10 +382,33 @@ void busca(){
 
         if(debug)cout << "Fi1  " << fi1[1] <<endl;
         if(debug)cout << "Fi2  " << fi2[1] <<endl;
-        identify(fi1[1],fi2[1]);
-        N=1;   
-        
-        m00.clear();
+        isLarge = identify(fi1[1],fi2[1]);
+        N=1;
+
+        if (isLarge){
+            // ************************************** /Angulo de la figura 2\ **************************************
+            double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+            if(debug)cout << "Angle is " << theta2 << endl;
+
+            double arrowHeadX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+            double arrowHeadY2 = tan(theta2) * arrowHeadX2;
+
+            double arrowTailX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+            double arrowTailY2 = tan(theta2) * arrowTailX2;
+
+            // Drawing line
+            line(segmented, Point(cx2-arrowTailX2, cy2 - arrowTailY2), Point(cx2+arrowHeadX2,
+                                                                             cy2+arrowHeadY2), (255, 100, 100), 3);
+            // Drawing line
+            line(segmented, Point(cx2+arrowTailX2, cy2 - arrowTailY2), Point(cx2-arrowHeadX2,
+                                                                             cy2+arrowHeadY2), (255, 100, 100), 3);
+
+            arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2,
+                                                                     centerHMira+arrowTailY2), (255, 100, 100), 3);
+        }
+
+
+    m00.clear();
         m10.clear();
         m01.clear();
         m20.clear();
@@ -415,6 +434,9 @@ void busca2(){
     int height = s.height;
     int width = s.width;
 
+    // Variables para graficar angulo
+    double arrowXFigure, arrowYFigure;
+
         //inicializar momentos
 
         m00.push_back(0);
@@ -456,21 +478,6 @@ void busca2(){
         mu02.push_back(m02[0] - (cy1*m01[0])) ;
         mu11.push_back(m11[0] - (cy1*m10[0])) ;
 
-        // ************************************** /Angulo de la figura 1\ **************************************
-        double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
-        if(debug)cout << "Angle is " << theta << endl;
-        double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
-        double arrowHeadY = tan(theta) * arrowHeadX;
-
-        double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
-        double arrowTailY = tan(theta) * arrowTailX;
-
-        // Drawing line
-        line(segmented, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
-                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
-        // Drawing line
-        line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
-                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
 
         //momentos normalizados
         n20.push_back((float) (mu20[0]/pow(m00[0],2)));
@@ -482,13 +489,30 @@ void busca2(){
         fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
         if(debug)cout << "Fi1  " << fi1[0] <<endl;
         if(debug)cout << "Fi2  " << fi2[0] <<endl;
-        identify(fi1[0],fi2[0]);
+        bool isLarge = identify(fi1[0],fi2[0]);
         // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura 
         
         fis1.push_back(fi1[0]);
         fis2.push_back(fi2[0]);
         if(debug)cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
-        
+
+    // ************************************** /Angulo de la figura 1\ **************************************
+    //if (isLarge) {
+        double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+        if(debug)cout << "Angle is " << theta << endl;
+        double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowHeadY = tan(theta) * arrowHeadX;
+
+        double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowTailY = tan(theta) * arrowTailX;
+
+        // Drawing line
+        line(segmented, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
+                                                                       cy1+arrowHeadY), (255, 100, 100), 3);
+        // Drawing line
+        line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+                                                                       cy1+arrowHeadY), (255, 100, 100), 3);
+    //}
          
         
         m00.clear();
@@ -591,8 +615,7 @@ int main(int argc, char *argv[]){
         //currentImage = imread("rojo2.jpg",IMREAD_COLOR);       
         camera >> currentImage;
         mira = imread("mira2.jpg",IMREAD_COLOR);
-   
-        
+
         }
         
         if (currentImage.data)
