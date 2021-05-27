@@ -405,6 +405,108 @@ void busca(){
         if(debug)cout<<"Termina busca"<<endl;
 }
 
+
+void busca2(){
+    if(debug)cout<<"Empieza busca"<<endl;
+    // Getting size of image
+    
+    Size s = segmented.size();
+    if(debug)cout<<"Se obtiene size"<<endl;
+    int height = s.height;
+    int width = s.width;
+
+        //inicializar momentos
+
+        m00.push_back(0);
+        m01.push_back(0);
+        m10.push_back(0);
+        m20.push_back(0);
+        m02.push_back(0);
+        m11.push_back(0);
+         // doble o falla el segundo centroide
+
+        m00.push_back(0);
+        m01.push_back(0);
+        m10.push_back(0);
+        m20.push_back(0);
+        m02.push_back(0);
+        m11.push_back(0);
+
+
+        if(debug)cout<<"Empieza seed"<<endl;
+        // Figura izquierda
+        seed(segmented, height, width/2, 0);
+        if(debug)cout<<"Termina seed"<<endl;
+        segment(currentImage,segmented);
+        if(debug)cout <<"Termina segment"<<endl;
+        if(debug)cout << "Area 1 = " << m00[0] <<endl;
+
+        //centroide figura 1
+        cx1 = (m10[0]/(m00[0]+ 1e-5)); //add 1e-5 to avoid division by zero
+        cy1 = (m01[0]/(m00[0]+ 1e-5)); // float ?
+        if(debug)cout << "suma X " << m10[0] <<endl;
+        if(debug)cout << "suma Y " << m01[0] <<endl;
+        if(debug)cout << "CX " << cx1 <<endl;
+        if(debug)cout << "CY " << cy1 <<endl;
+        circle (segmented,Point(cx1,cy1),4,(255,0,0),-1);
+
+
+            // momentos segundo orden
+        mu20.push_back(m20[0] - (cx1*m10[0]));
+        mu02.push_back(m02[0] - (cy1*m01[0])) ;
+        mu11.push_back(m11[0] - (cy1*m10[0])) ;
+
+        // ************************************** /Angulo de la figura 1\ **************************************
+        double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+        if(debug)cout << "Angle is " << theta << endl;
+        double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowHeadY = tan(theta) * arrowHeadX;
+
+        double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+        double arrowTailY = tan(theta) * arrowTailX;
+
+        // Drawing line
+        line(segmented, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
+                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
+        // Drawing line
+        line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+                                                                       cy1+arrowHeadY), (50, 50, 255), 3);
+
+        //momentos normalizados
+        n20.push_back((float) (mu20[0]/pow(m00[0],2)));
+        n02.push_back((float) (mu02[0]/pow(m00[0],2)));
+        n11.push_back((float) (mu11[0]/pow(m00[0],2)));
+
+        // fi 1 y fi 2
+        fi1.push_back(n20[0]+n02[0]+ 1e-5);
+        fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
+        if(debug)cout << "Fi1  " << fi1[0] <<endl;
+        if(debug)cout << "Fi2  " << fi2[0] <<endl;
+        identify(fi1[0],fi2[0]);
+        // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura 
+        
+        fis1.push_back(fi1[0]);
+        fis2.push_back(fi2[0]);
+        if(debug)cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
+        
+         
+        
+        m00.clear();
+        m10.clear();
+        m01.clear();
+        m20.clear();
+        m02.clear();
+        m11.clear();
+        mu02.clear();
+        mu20.clear();
+        mu11.clear();
+        n20.clear();
+        n02.clear();
+        fi1.clear();
+        fi2.clear();
+        if(debug)cout<<"Termina busca"<<endl;
+}
+
 int buscaWrapped()
 {
     std::mutex m;
@@ -428,6 +530,29 @@ int buscaWrapped()
     return retValue;    
 }
 
+
+int buscaWrapped2()
+{
+    std::mutex m;
+    std::condition_variable cond;
+    int retValue;
+
+    std::thread t([&cond, &retValue]() 
+    {
+        busca2();
+        cond.notify_one();
+    });
+
+    t.detach();
+
+    {
+        std::unique_lock<std::mutex> l(m);
+        if(cond.wait_for(l, 1s) == std::cv_status::timeout) 
+            throw std::runtime_error("Timeout");
+    }
+
+    return retValue;    
+}
 //Función para crear la imagen en fomrato YIQ
 void makeYIQ(const Mat &original, Mat &destination){
     if(destination.empty())
@@ -501,6 +626,19 @@ int main(int argc, char *argv[]){
                     setMouseCallback("YIQ", mouseClicked);
                     makeYIQ(currentImage,yiqImage);
                     imshow("YIQ",yiqImage);
+                    break;
+                case 'f':
+                    if(debug)cout << "e";
+                    separar(currentImage, segmented);
+                    namedWindow("Original");  
+                    try{
+                        buscaWrapped2();
+                    }
+                    catch(runtime_error& e){
+                        cout<<"Timed out, trying again."<<endl;
+                    }                  
+                    imshow("Original",currentImage);
+                    imshow("Segmented",segmented);
                     break;
                 case 'e':
                     if(debug)cout << "e";
