@@ -440,7 +440,7 @@ void busca(){
             line(segmented, Point(cx2+arrowTailX2, cy2 - arrowTailY2), Point(cx2-arrowHeadX2,
                                                                              cy2+arrowHeadY2), (255, 100, 100), 3);
 
-        if (isLarge) {
+        if (isLarge){
             arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2,
                                                                      centerHMira+arrowTailY2), (255, 100, 100), 3);
         }
