@@ -22,7 +22,7 @@ using namespace cv;
 using namespace std;
 using namespace std::chrono_literals;
 
-/*
+
 /*
     	  __^__                                      __^__
          ( ___ )------------------------------------( ___ )
@@ -31,12 +31,11 @@ using namespace std::chrono_literals;
           |___|                                      |___|
          (_____)------------------------------------(_____)
 */
- */
+
 VideoCapture camera;
 Mat currentImage, filteredImage,color, animationImage,binaryImage,grayImage,kernel,linea;
 bool debug = false; 
 bool pxy = false;
-//char sel = 'c';
 char sel = 'f';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big,px,py;
@@ -68,6 +67,8 @@ vector <float> n20,n02,n11,fi1,fi2,fis1,fis2;
 Vec3b pinto;
 Mat currentImageMira, segmentedMira;
 double theta;
+int entranceX = 46, entranceY = 31;
+
 const float maxApplefi1   = .13,
         maxPearfi1    = .17,
         maxBanannafi1 = 0.24,
@@ -128,7 +129,7 @@ bool inBounds(float val, float min, float max){
 void identify(float fi1, float fi2){
 
     // adjusting angle
-    int newTheta = 0;
+    int newTheta;
 
     // revisa si la figura es una zanahoria
     if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
@@ -139,7 +140,7 @@ void identify(float fi1, float fi2){
     } else {
         newTheta = (-theta*180)/(M_PI);
     }
-    cout << "El angulo es: " << newTheta << endl;
+    //cout << "El angulo es: " << newTheta << endl;
 
 }
 
@@ -464,6 +465,52 @@ void separarMira(const Mat &original, Mat &editRGB){
 }
 
 
+/*
+    	  __^__                                      __^__
+         ( ___ )------------------------------------( ___ )
+          | / |                                      | \ |
+          | / |             SET_ENTRANCE             | \ |
+          |___|                                      |___|
+         (_____)------------------------------------(_____)
+ * Funcion para escoger la entrada de acuerdo al angulo
+ * Parametros:
+ *
+ *
+ */
+
+void entrance() {
+
+    // adjusting angle
+    int newTheta;
+
+    if (-theta < 0){
+        newTheta = 360 - (-theta*180)/(M_PI);
+    } else {
+        newTheta = (-theta*180)/(M_PI);
+    }
+
+    if (newTheta < 90) {
+
+        entranceX = 266;
+        entranceY = 79;
+
+    } else if (newTheta < 180){
+
+        entranceX = 46;
+        entranceY = 31;
+
+    } else if (newTheta < 270){
+
+        entranceX = 10;
+        entranceY = 324;
+
+    } else {
+
+        entranceX = 255;
+        entranceY = 346;
+
+    }
+}
 
 
 
@@ -646,7 +693,6 @@ void binarize(const Mat &original, Mat &bin,int thresh){
 //Función de reacción al click en la imagen
 void mouseClicked(int event, int x, int y, int flags, void* param){
 
-
    
     Vec3b pix = currentImage.at<Vec3b>(y,x);
     unsigned char y_yiq,i_yiq,q_yiq;
@@ -654,16 +700,22 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
     {
         case EVENT_LBUTTONDOWN:
             cout << "X: " << x << " Y: "<< y <<endl;
-            cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
-            if(startSelected){
-        		finishingY = y;
-        		finishingX = x;
-                startSelected = false;
-        	}else{
-        		startingX = x;
-        		startingY = y;
-                startSelected = true;
-        	}
+            //cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
+
+            finishingY = y;
+            finishingX = x;
+            startingX = entranceX;
+            startingY = entranceY;
+//            if(startSelected){
+//        		finishingY = y;
+//        		finishingX = x;
+//                startSelected = false;
+//        	}else{
+//
+//        		startingX = entranceX;
+//        		startingY = entranceY;
+//                startSelected = true;
+//        	}
         	
         	px=x;   py=y;
         	pxy = true;
@@ -957,7 +1009,9 @@ int main(int argc, char *argv[]){
                      */
                 case 'd':
                     if(debug)cout << "d";
-                    
+
+                    clicked = true;
+
                     namedWindow("Filtered");
                     setMouseCallback("Filtered", mouseClicked);
                     separar(currentImage,grayImage);                     
@@ -973,6 +1027,7 @@ int main(int argc, char *argv[]){
                     imshow("Filtered",binaryImage);
                     if(animationImage.data)
                         imshow("Animated",animationImage);
+
                     break;
 
                     /*
@@ -993,7 +1048,10 @@ int main(int argc, char *argv[]){
                     }
                     imshow("OriginalMira",currentImageMira);
                     imshow("SegmentedMira",segmentedMira);
+
+
                     break;
+
 
                 default:
                     cout << "default";
@@ -1016,7 +1074,9 @@ int main(int argc, char *argv[]){
                     cin>>sel;
                     break;
                 case 'r':
+
                     // 315x362 image size
+                    // No mas capturas de la camara
                     if (pxy){
                     pozo();
                    	camino();
@@ -1033,6 +1093,11 @@ int main(int argc, char *argv[]){
                    		//Aquí lo de la mira
                    	}
                 break;
+                // presionar e para capturar el angulo y
+                // luego p para dejar de capturarlo
+                case 't':
+                    sel = 'd';
+                    break;
                 case 'x':
                     run = false;
                     break;
