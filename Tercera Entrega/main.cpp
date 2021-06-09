@@ -66,7 +66,7 @@ vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11;
 vector <float> n20,n02,n11,fi1,fi2,fis1,fis2;
 Vec3b pinto;
 Mat currentImageMira, segmentedMira;
-double theta;
+double theta = 45;
 int entranceX = 46, entranceY = 31;
 
 const float maxApplefi1   = .13,
@@ -130,17 +130,30 @@ void identify(float fi1, float fi2){
 
     // adjusting angle
     int newTheta;
-
-    // revisa si la figura es una zanahoria
-    if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
+    if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
         //cout<<"Zanahoria reconocida"<<endl;
+        if (-theta < 0){
+            newTheta = 360 - (-theta*180)/(M_PI);
+        } else {
+            newTheta = (-theta*180)/(M_PI);
+        }
+
+        cout << "El angulo es: " << newTheta << endl;
     }
-    if (-theta < 0){
-        newTheta = 360 - (-theta*180)/(M_PI);
-    } else {
-        newTheta = (-theta*180)/(M_PI);
-    }
-    //cout << "El angulo es: " << newTheta << endl;
+
+//    // revisa si la figura es una zanahoria
+//    if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
+//        //cout<<"Zanahoria reconocida"<<endl;
+//        if (-theta < 0){
+//            newTheta = 360 - (-theta*180)/(M_PI);
+//        } else {
+//            newTheta = (-theta*180)/(M_PI);
+//        }
+//
+//        cout << "El angulo es: " << newTheta << endl;
+//    }
+
+
 
 }
 
@@ -704,6 +717,10 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
 
             finishingY = y;
             finishingX = x;
+
+            // Obtener angulo
+            entrance();
+
             startingX = entranceX;
             startingY = entranceY;
 //            if(startSelected){
@@ -1076,12 +1093,12 @@ int main(int argc, char *argv[]){
                 case 'r':
 
                     // 315x362 image size
-                    // No mas capturas de la camara
+                    pxy =true;
                     if (pxy){
                     pozo();
                    	camino();
-                   	reverse(pathX.begin(),pathX.end());
-					reverse(pathY.begin(),pathY.end());   
+                   	//reverse(pathX.begin(),pathX.end());
+					//reverse(pathY.begin(),pathY.end());
 					/*while(!pathX.empty()){
 						cout<<pathX.back()<<endl;
 						pathX.pop_back();
@@ -1096,7 +1113,8 @@ int main(int argc, char *argv[]){
                 // presionar e para capturar el angulo y
                 // luego p para dejar de capturarlo
                 case 't':
-                    sel = 'd';
+                    sel = 'c';
+                    destroyAllWindows();
                     break;
                 case 'x':
                     run = false;
