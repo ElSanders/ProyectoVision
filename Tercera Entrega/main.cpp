@@ -69,6 +69,7 @@ vector <float> n20,n02,n11,fi1,fi2,fis1,fis2;
 Vec3b pinto;
 Mat currentImageMira, segmentedMira;
 double theta = 45;
+int direction = 1; // 1 es hacia arriba y 0 hacia abajo
 int entranceX = 46, entranceY = 31;
 int entrance = 1;
 
@@ -136,25 +137,26 @@ bool identify(float fi1, float fi2){
     bool bLargeFigure;
 
     if(inBounds(fi1,minApplefi1,maxApplefi1) ){
-        cout<<"Manzana reconocida"<<endl;
+        //cout<<"Manzana reconocida"<<endl;
         small=1;
         bLargeFigure = false;
     }
     if(inBounds(fi1,minPearfi1,maxPearfi1) ){
-        cout<<"Cereza reconocida"<<endl;
+        //cout<<"Cereza reconocida"<<endl;
         small=2;
         bLargeFigure = false;
     }
     if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
-        cout<<"Plátano reconocido"<<endl;
+        //cout<<"Plátano reconocido"<<endl;
         big=1;
         bLargeFigure = true;
     }
     if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
-        cout<<"Zanahoria reconocida"<<endl;
+        //cout<<"Zanahoria reconocida"<<endl;
         big=2;
         bLargeFigure = true;
     }
+    //cout << "El angulo F es: " << theta*180/M_PI << endl;
 
     //------MIRA--- escoger entrada
     int x, y ;
@@ -429,6 +431,7 @@ void buscaMira(){
     if (isLarge) {
         arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX,
                                                                  centerHMira+arrowTailY), (255, 100, 100), 3);
+
     }
 
 
@@ -487,7 +490,11 @@ void buscaMira(){
     if (isLarge){
         arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2,
                                                                  centerHMira+arrowTailY2), (255, 100, 100), 3);
+        theta = theta2;
     }
+
+    if (theta < 0) direction = 1;
+    else direction = 0;
 
 
     m00.clear(); m10.clear(); m01.clear(); m20.clear(); m02.clear();
@@ -572,39 +579,30 @@ void separarMira(const Mat &original, Mat &editRGB){
  *
  */
 
-//void entrance() {
-//
-//    // adjusting angle
-//    int newTheta;
-//
-//    if (-theta < 0){
-//        newTheta = 360 - (-theta*180)/(M_PI);
-//    } else {
-//        newTheta = (-theta*180)/(M_PI);
-//    }
-//
-//    if (newTheta < 90) {
-//
-//        entranceX = 266;
-//        entranceY = 79;
-//
-//    } else if (newTheta < 180){
-//
-//        entranceX = 46;
-//        entranceY = 31;
-//
-//    } else if (newTheta < 270){
-//
-//        entranceX = 10;
-//        entranceY = 324;
-//
-//    } else {
-//
-//        entranceX = 255;
-//        entranceY = 346;
-//
-//    }
-//}
+void entranceMira() {
+
+
+    switch (entrance) {
+        case 1:
+            entranceX = 46;
+            entranceY = 31;
+            break;
+        case 2:
+            entranceX = 266;
+            entranceY = 79;
+            break;
+        case 3:
+            entranceX = 10;
+            entranceY = 324;
+            break;
+        case 4:
+            entranceX = 255;
+            entranceY = 346;
+            break;
+        default:
+            break;
+    }
+}
 
 
 /*
@@ -825,7 +823,7 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
 	            finishingX = x;
 
             // Obtener angulo
-	            //entrance();
+	            entranceMira();
 
 	            startingX = entranceX;
 	            startingY = entranceY;
