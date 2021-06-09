@@ -36,7 +36,8 @@ VideoCapture camera;
 Mat currentImage, filteredImage,color, animationImage,binaryImage,grayImage,kernel,linea;
 bool debug = false; 
 bool pxy = false;
-char sel = 'f';
+bool angled = false;
+char sel = 'c';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big,px,py;
 
@@ -714,25 +715,26 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
         case EVENT_LBUTTONDOWN:
             cout << "X: " << x << " Y: "<< y <<endl;
             //cout << "R: " << (int)pix[2] << " G: " << (int)pix[1]<< " B: " << (int)pix[0]<<endl;
-
-            finishingY = y;
-            finishingX = x;
+            if(angled){
+	            finishingY = y;
+	            finishingX = x;
 
             // Obtener angulo
-            entrance();
+	            entrance();
 
-            startingX = entranceX;
-            startingY = entranceY;
-//            if(startSelected){
-//        		finishingY = y;
-//        		finishingX = x;
-//                startSelected = false;
-//        	}else{
-//
-//        		startingX = entranceX;
-//        		startingY = entranceY;
-//                startSelected = true;
-//        	}
+	            startingX = entranceX;
+	            startingY = entranceY;
+            }else{
+            	if(startSelected){
+	        		finishingY = y;
+	        		finishingX = x;
+	                startSelected = false;
+	        	}else{
+	        		startingX = x;
+	        		startingY = y;
+	                startSelected = true;
+	        	}
+            }
         	
         	px=x;   py=y;
         	pxy = true;
@@ -967,7 +969,7 @@ MAIN MAIN MAIN MAIN                                ( ( (
 int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
-    bool clicked = false, run = true;
+    bool clicked = false, run = true, ouch = true;
     currentImage = imread("parking2.jpg",IMREAD_COLOR);
     animationImage = imread("parking.jpg",IMREAD_COLOR);
     while (run)
@@ -1011,7 +1013,7 @@ int main(int argc, char *argv[]){
                     kernel = getStructuringElement(MORPH_RECT, Size(5,5));
 		     		dilate(binaryImage, binaryImage, kernel);
                     threshold(binaryImage,binaryImage,120,150,THRESH_BINARY);
-                    imshow("Filtered",binaryImage);
+                    if(ouch)imshow("Filtered",binaryImage);
                     if(animationImage.data)
                         imshow("Animated",animationImage);
                     break;
@@ -1055,6 +1057,7 @@ int main(int argc, char *argv[]){
                      */
                 case 'f':
                     if(debug)cout << "f";
+                    angled = true;
                     separarMira(currentImageMira, segmentedMira);
                     namedWindow("OriginalMira");
                     try{
@@ -1106,8 +1109,10 @@ int main(int argc, char *argv[]){
                     imshow("Elevation",color);
                     imshow("Linea",linea);
                     }
+                    if(angled)ouch = false;
                    	if(sel == 'd'){
                    		//Aquí lo de la mira
+                   		//circle(currentImage, (Point)points[i], 5, Scalar( 0, 0, 255 ), FILLED);
                    	}
                 break;
                 // presionar e para capturar el angulo y
