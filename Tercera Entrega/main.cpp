@@ -1061,10 +1061,11 @@ int main(int argc, char *argv[]){
 		     		dilate(binaryImage, binaryImage, kernel);
                     threshold(binaryImage,binaryImage,120,150,THRESH_BINARY);
                     if(ouch)imshow("Filtered",binaryImage);
-                    if(animationImage.data && !pathX.empty() && playAnimation)
+                    if(animationImage.data && !pathX.empty() && playAnimation) {
                         animation();
-                        imshow("Animated",animationImage);
-                    //make
+                        imshow("Animated", animationImage);
+                        if(pathX.size()>1)animationImage = imread("parking.jpg", IMREAD_COLOR);
+                    }
                     //if (playAnimation && !pathX.empty()) animation();
                     break;
 
