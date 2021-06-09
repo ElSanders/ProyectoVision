@@ -32,7 +32,7 @@ int cx1,cy1,cx2,cy2,small,big,px,py;
 
 bool startSelected = false;
 
-vector<int>seedY,seedX;
+vector<int>pathY,pathX;
 vector<int> lista1x, lista1y, lista2x,lista2y;
 
 int startingX = 0, startingY = 0, finishingX, finishingY; 
@@ -43,10 +43,10 @@ enum lastStep{
     DOWN
 }last;
 
-void routeFinder(Mat &image, int startX, int startY, int finishX, int finishY, int stepSize){
+/*void routeFinder(Mat &image, int startX, int startY, int finishX, int finishY, int stepSize){
     cout<<"Empieza route"<<endl;
     int currentX = finishingX, currentY = finishingY;
-    while(startX != currentX && startY != currentY){
+    while(startX != currentX || startY != currentY){
     	if(abs(startX-currentX)>=100*abs(startY-currentY)){
     		if(startX-currentX > 0){
     			if(image.at<Vec3b>(currentY,currentX+stepSize)[0] > 10){
@@ -160,29 +160,16 @@ void routeFinder(Mat &image, int startX, int startY, int finishX, int finishY, i
         cout<<seedX.back()<<" "<<seedY.back()<<endl;;
     }
     cout<<"Termina route"<<endl;
-}
+}*/
 
-void paint(Mat &img){
-    cout<<"size: "<<seedX.size()<<" "<<seedY.size()<<endl;
-    while(!seedX.empty() && !seedY.empty()){
-        if(seedY.back()>img.rows || seedY.back()<0 ||seedX.back()>img.cols || seedX.back()<0 ){
-            seedY.pop_back();
-            seedX.pop_back();
-        }else{
-            img.at<Vec3b>(seedY.back(),seedX.back()) = {0,0,255};
-            cout<<seedY.back()<<" "<<seedX.back()<<endl;
-            
-            if(seedY.back()>0)img.at<Vec3b>(seedY.back()-1,seedX.back()) = {0,0,255};
-            if(seedY.back()<img.rows-1)img.at<Vec3b>(seedY.back()+1,seedX.back()) = {0,0,255};
-            if(seedX.back()>0)img.at<Vec3b>(seedY.back(),seedX.back()-1) = {0,0,255};
-            if(seedX.back()<img.cols-1)img.at<Vec3b>(seedY.back(),seedX.back()+1) = {0,0,255};
-            seedY.pop_back();
-            seedX.pop_back();
-        }
-    }
-    cout<<"Termina paint"<<endl;
-    seedY.clear();
-    seedX.clear();
+void paint(Mat &img, int x, int y){
+    if(y>0)img.at<Vec3b>(x-1,x) = {0,0,255};
+    if(y<img.rows-1)img.at<Vec3b>(y+1,x) = {0,0,255};
+    if(x>0)img.at<Vec3b>(y,x-1) = {0,0,255};
+    if(x<img.cols-1)img.at<Vec3b>(y,x+1) = {0,0,255};
+    pathY.push_back(y);
+    pathX.push_back(x);
+     
 }
 
 //Cambia una imágen a escala de grises
@@ -376,52 +363,25 @@ void camino(){
     
     cout << "sig " << sig <<endl;
     
-    // pintar punto de inicio    
-   //binaryImage.at<Vec3b>(Point(x,y))= pinto;
-    
    while((x!=finishingX) || (y!=finishingY)){
     
-   //while(!siguiente){
-   //distancia 4
     for(int r=0; r<4; r++){ 
       static int m=1; 
       if (!siguiente){
-       if ((color.at<Vec3b>(Point(x+d4[r][0],y+d4[r][1]))[1] < inicio)&& (color.at<Vec3b>(Point(x+d4[r][0],y+d4[r][1]))!= fondo)){
-         siguiente = true;
-         x=x+d4[r][0];
-         y=y+d4[r][1];         
-         linea.at<Vec3b>(Point(x,y))=pinto;
-         //if(sig!=0)
-         sig = sig-1;
-         cout << "avanzo" <<endl;   
-         inicio = color.at<Vec3b>(Point(x,y))[1];
-         cout << "x nueva " << x <<endl;
-         cout << "y nueva " << y <<endl ;
-         cout << "inicio Nuevo " << inicio <<endl;     
-       }
-       /*else{
-           if (m==3){
-              m=1;
-              for(int r=0; r<4; r++){ 
-               if (!siguiente){
-              if (color.at<Vec3b>(Point(x+d4[r][0],y+d4[r][1]))[1] == (sig+1)){
-           siguiente = true;
-           x=x+d4[r][0];
-           y=y+d4[r][1];         
-           //color.at<Vec3b>(Point(x,y))=pinto;
-           
-           cout << "avanzo2" <<endl;
-           inicio = color.at<Vec3b>(Point(x,y))[1]; 
-           cout << "inicio Nuevo " << inicio <<endl;
-           cout << "x nueva " << x <<endl;
-           cout << "y nueva " << y <<endl ; 
-                 }
-                 }
-                }
-                }
-               m++;
-                }*/
-                }  
+	    if ((color.at<Vec3b>(Point(x+d4[r][0],y+d4[r][1]))[1] < inicio)&& (color.at<Vec3b>(Point(x+d4[r][0],y+d4[r][1]))!= fondo)){
+	    	siguiente = true;
+	        x=x+d4[r][0];
+	        y=y+d4[r][1];
+	        paint(linea,x,y);
+	         //if(sig!=0)
+	        sig = sig-1;
+	        cout << "avanzo" <<endl;   
+	        inicio = color.at<Vec3b>(Point(x,y))[1];
+	        cout << "x nueva " << x <<endl;
+	        cout << "y nueva " << y <<endl ;
+	        cout << "inicio Nuevo " << inicio <<endl;     
+	     }
+       }  
                  
       }
       if (!siguiente){
@@ -432,7 +392,7 @@ void camino(){
          siguiente = true;
          x=x+d42[r][0];
          y=y+d42[r][1];         
-         linea.at<Vec3b>(Point(x,y))=pinto;
+         paint(linea,x,y);
          if(sig!=0) sig = sig-1;
          cout << "avanzo2" <<endl;   
          inicio = color.at<Vec3b>(Point(x,y))[1];
@@ -491,19 +451,32 @@ int main(int argc, char *argv[]){
                     rgbToBW(grayImage,grayImage);                    
                     threshold(grayImage,binaryImage,100,150,THRESH_BINARY);
 					bilateralFilter(grayImage, binaryImage, 7, 100, 100);
-					
-					kernel = getStructuringElement(MORPH_RECT, Size(9,9));
-					//dilate(binaryImage, binaryImage, kernel);
                     
                     kernel = getStructuringElement(MORPH_RECT, Size(5,5));
                     erode(binaryImage, binaryImage, kernel);
                     kernel = getStructuringElement(MORPH_RECT, Size(5,5));
-		     dilate(binaryImage, binaryImage, kernel);
+		     		dilate(binaryImage, binaryImage, kernel);
                     threshold(binaryImage,binaryImage,120,150,THRESH_BINARY);
                     imshow("Filtered",binaryImage);
+                    if(animationImage.data)
+                        imshow("Animated",animationImage);
+                    break;
+                case 'd':
+                    if(debug)cout << "d";
                     
+                    namedWindow("Filtered");
+                    setMouseCallback("Filtered", mouseClicked);
+                    separar(currentImage,grayImage);                     
+                    rgbToBW(grayImage,grayImage);                    
+                    threshold(grayImage,binaryImage,100,150,THRESH_BINARY);
+					bilateralFilter(grayImage, binaryImage, 7, 100, 100);
                     
-                    
+                    kernel = getStructuringElement(MORPH_RECT, Size(5,5));
+                    erode(binaryImage, binaryImage, kernel);
+                    kernel = getStructuringElement(MORPH_RECT, Size(5,5));
+		     		dilate(binaryImage, binaryImage, kernel);
+                    threshold(binaryImage,binaryImage,120,150,THRESH_BINARY);
+                    imshow("Filtered",binaryImage);
                     if(animationImage.data)
                         imshow("Animated",animationImage);
                     break;
@@ -531,12 +504,19 @@ int main(int argc, char *argv[]){
                     
                     if (pxy){
                     pozo();
-                   camino();
+                   	camino();
+                   	reverse(pathX.begin(),pathX.end());
+					reverse(pathY.begin(),pathY.end());   
+					/*while(!pathX.empty()){
+						cout<<pathX.back()<<endl;
+						pathX.pop_back();
+					} */               	
                     imshow("Elevation",color);
                     imshow("Linea",linea);
                     }
-                   routeFinder(binaryImage, startingX, startingY, finishingX, finishingY, 1);
-                    paint(animationImage);
+                   	if(sel == 'd'){
+                   		//Aquí lo de la mira
+                   	}
                 break;
                 case 'x':
                     run = false;
