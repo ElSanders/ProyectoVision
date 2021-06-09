@@ -22,11 +22,22 @@ using namespace cv;
 using namespace std;
 using namespace std::chrono_literals;
 
+/*
+/*
+    	  __^__                                      __^__
+         ( ___ )------------------------------------( ___ )
+          | / |                                      | \ |
+          | / |        Variables para camino         | \ |
+          |___|                                      |___|
+         (_____)------------------------------------(_____)
+*/
+ */
 VideoCapture camera;
 Mat currentImage, filteredImage,color, animationImage,binaryImage,grayImage,kernel,linea;
 bool debug = false; 
 bool pxy = false;
-char sel = 'c';
+//char sel = 'c';
+char sel = 'f';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big,px,py;
 
@@ -56,6 +67,7 @@ vector<int> seedX,seedY,m00,m01,m20,m02,m11,m10,mu20,mu02,mu11;
 vector <float> n20,n02,n11,fi1,fi2,fis1,fis2;
 Vec3b pinto;
 Mat currentImageMira, segmentedMira;
+double theta;
 const float maxApplefi1   = .13,
         maxPearfi1    = .17,
         maxBanannafi1 = 0.24,
@@ -107,29 +119,28 @@ bool inBounds(float val, float min, float max){
          (_____)------------------------------------(_____)
 
  * Funcion para hacer el reconocimiento de la figura
+ * También imprime y ajusta el ángulo
  *
  * Parametros:
  *      fi1, f2: valores fi de la figura mostrada en camara
  *
 */
-bool identify(float fi1, float fi2){
+void identify(float fi1, float fi2){
 
-    // Bool to identify large figure
-    bool bLargeFigure;
+    // adjusting angle
+    int newTheta = 0;
 
-    // revisa si la figura es una banana o zanahoria
-    if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
-        cout<<"Plátano reconocido"<<endl;
-        big=1;
-        bLargeFigure = true;
-    }
+    // revisa si la figura es una zanahoria
     if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
-        cout<<"Zanahoria reconocida"<<endl;
-        big=2;
-        bLargeFigure = true;
+        //cout<<"Zanahoria reconocida"<<endl;
     }
+    if (-theta < 0){
+        newTheta = 360 - (-theta*180)/(M_PI);
+    } else {
+        newTheta = (-theta*180)/(M_PI);
+    }
+    cout << "El angulo es: " << newTheta << endl;
 
-    return bLargeFigure;
 }
 
 
@@ -262,6 +273,18 @@ void seedMira(const Mat &original, int height, int width, int offSet) {
                 seedY.push_back(rand_Y);
             }
         }
+
+        if (!bSeed) {
+            rand_X = rand() % int((0.75*width)) + int((0.25*width)); // Offset it is the initial value for random
+            rand_Y = rand() % int((0.25*height)) + int((0.75*height));
+            if(rand_Y<original.rows-2 && rand_X<original.cols-2 && rand_X>-1 && rand_Y>-1){
+                if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
+                    bSeed = true;
+                    seedX.push_back(rand_X);
+                    seedY.push_back(rand_Y);
+                }
+            }
+        }
     }
 }
 
@@ -345,16 +368,17 @@ void buscaMira(){
     fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
     if(debug)cout << "Fi1  " << fi1[0] <<endl;
     if(debug)cout << "Fi2  " << fi2[0] <<endl;
-    bool isLarge = identify(fi1[0],fi2[0]);
+    identify(fi1[0],fi2[0]);
     // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura
 
     fis1.push_back(fi1[0]);
     fis2.push_back(fi2[0]);
     if(debug)cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
 
+
     // ************************************** /Angulo de la figura 1\ **************************************
     //if (isLarge) {
-    double theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+    theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
     if(debug)cout << "Angle is " << theta << endl;
     double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
     double arrowHeadY = tan(theta) * arrowHeadX;
@@ -362,12 +386,12 @@ void buscaMira(){
     double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
     double arrowTailY = tan(theta) * arrowTailX;
 
-    // Drawing line
-    line(segmentedMira, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
+    // Drawing line 0 = arrowTailX y Y
+    line(segmentedMira, Point(cx1-0, cy1 - 0), Point(cx1+arrowHeadX,
                                                                    cy1+arrowHeadY), (255, 100, 100), 3);
     // Drawing line
-    line(segmentedMira, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
-                                                                   cy1+arrowHeadY), (255, 100, 100), 3);
+    //line(segmentedMira, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+    //                                                               cy1+arrowHeadY), (255, 100, 100), 3);
     //}
 
 
@@ -438,16 +462,6 @@ void separarMira(const Mat &original, Mat &editRGB){
     original.copyTo(editRGB,maskRGB);
 
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -884,7 +898,7 @@ MAIN MAIN MAIN MAIN                                ( ( (
 int main(int argc, char *argv[]){
     camera.open(0);
     int thresh = 0;
-    bool clicked = true, run = true;
+    bool clicked = false, run = true;
     currentImage = imread("parking2.jpg",IMREAD_COLOR);
     animationImage = imread("parking.jpg",IMREAD_COLOR);
     while (run)
