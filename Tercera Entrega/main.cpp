@@ -33,7 +33,7 @@ using namespace std::chrono_literals;
 */
 
 VideoCapture camera;
-Mat currentImage, filteredImage,color, animationImage,binaryImage,grayImage,kernel,linea;
+Mat currentImage, filteredImage,color, animationImage,binaryImage,grayImage,kernel,linea, mira;
 bool debug = false; 
 bool pxy = false;
 bool angled = false;
@@ -70,6 +70,8 @@ Vec3b pinto;
 Mat currentImageMira, segmentedMira;
 double theta = 45;
 int entranceX = 46, entranceY = 31;
+int entrance = 1;
+
 
 const float maxApplefi1   = .13,
         maxPearfi1    = .17,
@@ -128,34 +130,56 @@ bool inBounds(float val, float min, float max){
  *      fi1, f2: valores fi de la figura mostrada en camara
  *
 */
-void identify(float fi1, float fi2){
+bool identify(float fi1, float fi2){
 
-    // adjusting angle
-    int newTheta;
+    // Bool to identify large figure
+    bool bLargeFigure;
+
+    if(inBounds(fi1,minApplefi1,maxApplefi1) ){
+        cout<<"Manzana reconocida"<<endl;
+        small=1;
+        bLargeFigure = false;
+    }
+    if(inBounds(fi1,minPearfi1,maxPearfi1) ){
+        cout<<"Cereza reconocida"<<endl;
+        small=2;
+        bLargeFigure = false;
+    }
     if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
-        //cout<<"Zanahoria reconocida"<<endl;
-        if (-theta < 0){
-            newTheta = 360 - (-theta*180)/(M_PI);
-        } else {
-            newTheta = (-theta*180)/(M_PI);
-        }
-
-        cout << "El angulo es: " << theta*180/M_PI << endl;
+        cout<<"Plátano reconocido"<<endl;
+        big=1;
+        bLargeFigure = true;
+    }
+    if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
+        cout<<"Zanahoria reconocida"<<endl;
+        big=2;
+        bLargeFigure = true;
     }
 
-//    // revisa si la figura es una zanahoria
-//    if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
-//        //cout<<"Zanahoria reconocida"<<endl;
-//        if (-theta < 0){
-//            newTheta = 360 - (-theta*180)/(M_PI);
-//        } else {
-//            newTheta = (-theta*180)/(M_PI);
-//        }
-//
-//        cout << "El angulo es: " << newTheta << endl;
-//    }
+    //------MIRA--- escoger entrada
+    int x, y ;
+    if(debug)cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
+    if ((small == 1) && (big ==1)){ // manzana y platano
+        x = 365; y = 135;
+        entrance = 2;
+    }
+    if ((small == 2) && (big ==1)){ // cherry y platano
+        x = 365; y = 205;
+        entrance = 4;
+    }
+    if ((small == 1) && (big ==2)){ // manzana y zanahoria
+        x = 285; y = 135;
+        entrance = 1;
+    }
+    if ((small == 2) && (big ==2)){ // cherry y zanahoria
+        x = 285; y = 205;
+        entrance = 3;
+    }
 
+    circle (mira,Point(x,y),25,(0,0,255),-1);
+    imshow("Mira", mira);
 
+    return bLargeFigure;
 
 }
 
@@ -237,7 +261,7 @@ void paintMira(const Mat &original, Mat &segImg,int x, int y){
  */
 
 void segmentMira(const Mat &original, Mat &segImg){
-    if(debug)cout<<"Empieza segment"<<endl;
+    //if(debug)cout<<"Empieza segment"<<endl;
     int x , y;
 
     while(!seedX.empty()){
@@ -262,9 +286,10 @@ void segmentMira(const Mat &original, Mat &segImg){
  * Parametros:
  *      original: Matriz imagen original
  *      height, width: alto y ancho de la figura
+ *      offset: offset para el numero aleatorio
  *
  */
-void seedMira(const Mat &original, int height, int width, int offSet) {
+void seedMira(const Mat &original, int height, int width, int offset) {
 
     // Boolean to stay in loop until a seed is found
     bool bSeed = false;
@@ -279,7 +304,7 @@ void seedMira(const Mat &original, int height, int width, int offSet) {
     while (!bSeed) {
 
         // Getting rand number in image size range
-        rand_X = rand() % width + offSet; // Offset it is the initial value for random
+        rand_X = rand() % width + offset; // Offset it is the initial value for random
         rand_Y = rand() % height;
 
         if(rand_Y<original.rows-2 && rand_X<original.cols-2 && rand_X>-1 && rand_Y>-1){
@@ -287,18 +312,6 @@ void seedMira(const Mat &original, int height, int width, int offSet) {
                 bSeed = true;
                 seedX.push_back(rand_X);
                 seedY.push_back(rand_Y);
-            }
-        }
-
-        if (!bSeed) {
-            rand_X = rand() % int((0.75*width)) + int((0.25*width)); // Offset it is the initial value for random
-            rand_Y = rand() % int((0.25*height)) + int((0.75*height));
-            if(rand_Y<original.rows-2 && rand_X<original.cols-2 && rand_X>-1 && rand_Y>-1){
-                if (original.at<Vec3b>(rand_Y, rand_X) != fondo){
-                    bSeed = true;
-                    seedX.push_back(rand_X);
-                    seedY.push_back(rand_Y);
-                }
             }
         }
     }
@@ -328,6 +341,8 @@ void buscaMira(){
     int width = s.width;
 
     // Variables para graficar angulo
+    int centerWMira = 640/2 + 5;
+    int centerHMira = 360/2 - 12;
     double arrowXFigure, arrowYFigure;
 
     //inicializar momentos
@@ -348,6 +363,7 @@ void buscaMira(){
     m11.push_back(0);
 
 
+    // Figura izquierda
     if(debug)cout<<"Empieza seed"<<endl;
     seedMira(segmentedMira, height, width/2, 0);
     if(debug)cout<<"Termina seed"<<endl;
@@ -383,17 +399,19 @@ void buscaMira(){
     fi2.push_back(pow((n20[0]-n02[0]),2)+4*pow(n11[0],2)+ 1e-5);
     if(debug)cout << "Fi1  " << fi1[0] <<endl;
     if(debug)cout << "Fi2  " << fi2[0] <<endl;
-    identify(fi1[0],fi2[0]);
-    // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura
+    bool isLarge = identify(fi1[0],fi2[0]);
 
+    // recolentacndo valores de fi para ENTRENAMIENTO, solo una figura
     fis1.push_back(fi1[0]);
     fis2.push_back(fi2[0]);
     if(debug)cout<<" , "<< fi1 [0]<< " , " << fi2 [0]  << endl;
 
 
+    N++;
+
     // ************************************** /Angulo de la figura 1\ **************************************
     //if (isLarge) {
-    theta = -0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+    theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
     if(debug)cout << "Angle is " << theta << endl;
     double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
     double arrowHeadY = tan(theta) * arrowHeadX;
@@ -401,13 +419,75 @@ void buscaMira(){
     double arrowTailX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
     double arrowTailY = tan(theta) * arrowTailX;
 
-    // Drawing line 0 = arrowTailX y Y
-    line(segmentedMira, Point(cx1-0, cy1 - 0), Point(cx1+arrowHeadX,
-                                                                   cy1-arrowHeadY), (255, 100, 100), 3);
     // Drawing line
-//    line(segmentedMira, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+    line(segmentedMira, Point(cx1-arrowTailX, cy1 - arrowTailY), Point(cx1+arrowHeadX,
+                                                                   cy1+arrowHeadY), (255, 100, 100), 3);
+    // Drawing line
+//    line(segmented, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
 //                                                                   cy1+arrowHeadY), (255, 100, 100), 3);
-    //}
+
+    if (isLarge) {
+        arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX,
+                                                                 centerHMira+arrowTailY), (255, 100, 100), 3);
+    }
+
+
+    // Figura derecha --------------------------------------------------------------------------------
+    seedMira(segmentedMira, height, width/2, 0);
+    segmentMira(currentImageMira,segmentedMira);
+    if(debug)cout << "Area 2 = " << m00[1] <<endl;
+
+    //centroide figura 2
+    cx2 = (m10[1]/(m00[1]+ 1e-5)); //add 1e-5 to avoid division by zero
+    cy2 = (m01[1]/(m00[1]+ 1e-5)); // float ?
+    if(debug)cout << "suma X " << m10[1] <<endl;
+    if(debug)cout << "suma Y " << m01[1] <<endl;
+    if(debug)cout << "CX " << cx2 <<endl;
+    if(debug)cout << "CY " << cy2 <<endl;
+    circle (segmentedMira,Point(cx2,cy2),4,(255,0,0),-1);
+
+
+    // momentos segundo orden
+    mu20.push_back(m20[1] - (cx2*m10[1]));
+    mu02.push_back(m02[1] - (cy2*m01[1])) ;
+    mu11.push_back(m11[1] - (cy2*m10[1])) ;
+
+
+    //momentos normalizados
+    n20.push_back((float) (mu20[1]/pow(m00[1],2)));
+    n02.push_back((float) (mu02[1]/pow(m00[1],2)));
+    n11.push_back((float) (mu11[1]/pow(m00[1],2)));
+
+    // fi 1 y fi 2
+    fi1.push_back(n20[1]+n02[1]);
+    fi2.push_back(pow((n20[1]-n02[1]),2)+4*pow(n11[1],2));
+
+    if(debug)cout << "Fi1  " << fi1[1] <<endl;
+    if(debug)cout << "Fi2  " << fi2[1] <<endl;
+    isLarge = identify(fi1[1],fi2[1]);
+    N=1;
+
+    // ************************************** /Angulo de la figura 2\ **************************************
+    double theta2 = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+    if(debug)cout << "Angle is " << theta2 << endl;
+
+    double arrowHeadX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+    double arrowHeadY2 = tan(theta2) * arrowHeadX2;
+
+    double arrowTailX2 = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
+    double arrowTailY2 = tan(theta2) * arrowTailX2;
+
+    // Drawing line
+    line(segmentedMira, Point(cx2-arrowTailX2, cy2 - arrowTailY2), Point(cx2+arrowHeadX2,
+                                                                     cy2+arrowHeadY2), (255, 100, 100), 3);
+    // Drawing line
+//    line(segmented, Point(cx2+arrowTailX2, cy2 - arrowTailY2), Point(cx2-arrowHeadX2,
+//                                                                     cy2+arrowHeadY2), (255, 100, 100), 3);
+
+    if (isLarge){
+        arrowedLine(mira, Point(centerWMira, centerHMira), Point(centerWMira+arrowTailX2,
+                                                                 centerHMira+arrowTailY2), (255, 100, 100), 3);
+    }
 
 
     m00.clear(); m10.clear(); m01.clear(); m20.clear(); m02.clear();
@@ -492,39 +572,39 @@ void separarMira(const Mat &original, Mat &editRGB){
  *
  */
 
-void entrance() {
-
-    // adjusting angle
-    int newTheta;
-
-    if (-theta < 0){
-        newTheta = 360 - (-theta*180)/(M_PI);
-    } else {
-        newTheta = (-theta*180)/(M_PI);
-    }
-
-    if (newTheta < 90) {
-
-        entranceX = 266;
-        entranceY = 79;
-
-    } else if (newTheta < 180){
-
-        entranceX = 46;
-        entranceY = 31;
-
-    } else if (newTheta < 270){
-
-        entranceX = 10;
-        entranceY = 324;
-
-    } else {
-
-        entranceX = 255;
-        entranceY = 346;
-
-    }
-}
+//void entrance() {
+//
+//    // adjusting angle
+//    int newTheta;
+//
+//    if (-theta < 0){
+//        newTheta = 360 - (-theta*180)/(M_PI);
+//    } else {
+//        newTheta = (-theta*180)/(M_PI);
+//    }
+//
+//    if (newTheta < 90) {
+//
+//        entranceX = 266;
+//        entranceY = 79;
+//
+//    } else if (newTheta < 180){
+//
+//        entranceX = 46;
+//        entranceY = 31;
+//
+//    } else if (newTheta < 270){
+//
+//        entranceX = 10;
+//        entranceY = 324;
+//
+//    } else {
+//
+//        entranceX = 255;
+//        entranceY = 346;
+//
+//    }
+//}
 
 
 /*
@@ -548,23 +628,10 @@ void animation(){
     cout << "tamaño del vector y: " << pathY.size() << endl;
 
     circle(animationImage, Point(pathX.back(), pathY.back()), 5, (0, 255, 255), FILLED);
-    //imshow("Phi Graph", phiGraph);
     usleep(microsecond);//sleeps for 1 second
     pathX.pop_back();
     pathY.pop_back();
-//    while(!pathX.empty()){
-//        cout << "tamaño del vector x: " << pathX.size() << endl;
-//        cout << "tamaño del vector y: " << pathY.size() << endl;
-//        circle(animationImage, Point(pathX.back(), pathY.back()), 5, Scalar( 0, 255, 255 ), FILLED);
-//        if(animationImage.data)
-//            cout << "Si hay datos" << endl;
-//            imshow("Animated",animationImage);
-//        //imshow("Animation",animationImage);
-//        usleep(microsecond);//sleeps for 1 second
-//        pathX.pop_back();
-//        pathY.pop_back();
-//    }
-//    imshow("Animation",animationImage);
+
 }
 
 
@@ -758,7 +825,7 @@ void mouseClicked(int event, int x, int y, int flags, void* param){
 	            finishingX = x;
 
             // Obtener angulo
-	            entrance();
+	            //entrance();
 
 	            startingX = entranceX;
 	            startingY = entranceY;
@@ -1014,6 +1081,7 @@ int main(int argc, char *argv[]){
     {
         if(!clicked){
             camera >> currentImageMira;
+            mira = imread("mira2.jpg",IMREAD_COLOR);
         }
         
         if (currentImage.data)
