@@ -393,7 +393,7 @@ void buscaMira(){
 
     // ************************************** /Angulo de la figura 1\ **************************************
     //if (isLarge) {
-    theta = -0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back()) + M_PI_2;
+    theta = -0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
     if(debug)cout << "Angle is " << theta << endl;
     double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
     double arrowHeadY = tan(theta) * arrowHeadX;
