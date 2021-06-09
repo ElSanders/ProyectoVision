@@ -37,6 +37,7 @@ Mat currentImage, filteredImage,color, animationImage,binaryImage,grayImage,kern
 bool debug = false; 
 bool pxy = false;
 bool angled = false;
+bool playAnimation = false;
 char sel = 'c';
 int N = 1;
 int cx1,cy1,cx2,cy2,small,big,px,py;
@@ -139,7 +140,7 @@ void identify(float fi1, float fi2){
             newTheta = (-theta*180)/(M_PI);
         }
 
-        cout << "El angulo es: " << newTheta << endl;
+        cout << "El angulo es: " << theta*180/M_PI << endl;
     }
 
 //    // revisa si la figura es una zanahoria
@@ -317,7 +318,6 @@ void seedMira(const Mat &original, int height, int width, int offSet) {
  *      none
  *
  */
-
 void buscaMira(){
     if(debug)cout<<"Empieza busca"<<endl;
     // Getting size of image
@@ -393,7 +393,7 @@ void buscaMira(){
 
     // ************************************** /Angulo de la figura 1\ **************************************
     //if (isLarge) {
-    theta = 0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back());
+    theta = -0.5 * atan2((2*mu11.back()), mu20.back() - mu02.back()) + M_PI_2;
     if(debug)cout << "Angle is " << theta << endl;
     double arrowHeadX = 100.0; // width of the figure. SET LATER WITH REAL VALUES ----------------------------------
     double arrowHeadY = tan(theta) * arrowHeadX;
@@ -403,10 +403,10 @@ void buscaMira(){
 
     // Drawing line 0 = arrowTailX y Y
     line(segmentedMira, Point(cx1-0, cy1 - 0), Point(cx1+arrowHeadX,
-                                                                   cy1+arrowHeadY), (255, 100, 100), 3);
+                                                                   cy1-arrowHeadY), (255, 100, 100), 3);
     // Drawing line
-    //line(segmentedMira, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
-    //                                                               cy1+arrowHeadY), (255, 100, 100), 3);
+//    line(segmentedMira, Point(cx1+arrowTailX, cy1 - arrowTailY), Point(cx1-arrowHeadX,
+//                                                                   cy1+arrowHeadY), (255, 100, 100), 3);
     //}
 
 
@@ -527,7 +527,45 @@ void entrance() {
 }
 
 
+/*
+    	  __^__                                      __^__
+         ( ___ )------------------------------------( ___ )
+          | / |                                      | \ |
+          | / |               animation              | \ |
+          |___|                                      |___|
+         (_____)------------------------------------(_____)
 
+ * Funcion para mostrar la animacion del robot moviéndose
+ *
+ * Parametros:
+ *      none
+ *
+*/
+void animation(){
+
+    unsigned int microsecond = 100000;
+    cout << "tamaño del vector x: " << pathX.size() << endl;
+    cout << "tamaño del vector y: " << pathY.size() << endl;
+
+    circle(animationImage, Point(pathX.back(), pathY.back()), 5, (0, 255, 255), FILLED);
+    //imshow("Phi Graph", phiGraph);
+    usleep(microsecond);//sleeps for 1 second
+    pathX.pop_back();
+    pathY.pop_back();
+//    while(!pathX.empty()){
+//        cout << "tamaño del vector x: " << pathX.size() << endl;
+//        cout << "tamaño del vector y: " << pathY.size() << endl;
+//        circle(animationImage, Point(pathX.back(), pathY.back()), 5, Scalar( 0, 255, 255 ), FILLED);
+//        if(animationImage.data)
+//            cout << "Si hay datos" << endl;
+//            imshow("Animated",animationImage);
+//        //imshow("Animation",animationImage);
+//        usleep(microsecond);//sleeps for 1 second
+//        pathX.pop_back();
+//        pathY.pop_back();
+//    }
+//    imshow("Animation",animationImage);
+}
 
 
 /*void routeFinder(Mat &image, int startX, int startY, int finishX, int finishY, int stepSize){
@@ -998,6 +1036,15 @@ int main(int argc, char *argv[]){
                     /*
                      ███▓▒░░.OPCION DE CAMINOS AUTOMATICA SIN MIRA.░░▒▓███
                      */
+                    /*
+                     *     oooO
+                          (....)     Oooo
+                           ...(     (....)
+                            ._)      )../
+                                     (_/
+                        OPCION PARA PLANIFICADOR
+                        DE CAMINOS CON MIRA
+                     */
                 case 'c':
                     if(debug)cout << "c";
                     
@@ -1014,38 +1061,12 @@ int main(int argc, char *argv[]){
 		     		dilate(binaryImage, binaryImage, kernel);
                     threshold(binaryImage,binaryImage,120,150,THRESH_BINARY);
                     if(ouch)imshow("Filtered",binaryImage);
-                    if(animationImage.data)
+                    if(animationImage.data && !pathX.empty() && playAnimation)
+                        animation();
                         imshow("Animated",animationImage);
+                    //make
+                    //if (playAnimation && !pathX.empty()) animation();
                     break;
-                    /*
-                     *     oooO
-                          (....)     Oooo
-                           ...(     (....)
-                            ._)      )../
-                                     (_/
-                        OPCION PARA PLANIFICADOR
-                        DE CAMINOS CON MIRA
-                     */
-                case 'd':
-                    if(debug)cout << "d";
-
-                    clicked = true;
-
-                    namedWindow("Filtered");
-                    setMouseCallback("Filtered", mouseClicked);
-                    separar(currentImage,grayImage);                     
-                    rgbToBW(grayImage,grayImage);                    
-                    threshold(grayImage,binaryImage,100,150,THRESH_BINARY);
-					bilateralFilter(grayImage, binaryImage, 7, 100, 100);
-                    
-                    kernel = getStructuringElement(MORPH_RECT, Size(5,5));
-                    erode(binaryImage, binaryImage, kernel);
-                    kernel = getStructuringElement(MORPH_RECT, Size(5,5));
-		     		dilate(binaryImage, binaryImage, kernel);
-                    threshold(binaryImage,binaryImage,120,150,THRESH_BINARY);
-                    imshow("Filtered",binaryImage);
-                    if(animationImage.data)
-                        imshow("Animated",animationImage);
 
                     break;
 
@@ -1066,7 +1087,7 @@ int main(int argc, char *argv[]){
                     catch(runtime_error& e){
                         cout<<"Timed out, trying again."<<endl;
                     }
-                    imshow("OriginalMira",currentImageMira);
+                    //imshow("OriginalMira",currentImageMira);
                     imshow("SegmentedMira",segmentedMira);
 
 
@@ -1100,8 +1121,8 @@ int main(int argc, char *argv[]){
                     if (pxy){
                     pozo();
                    	camino();
-                   	//reverse(pathX.begin(),pathX.end());
-					//reverse(pathY.begin(),pathY.end());
+                   	reverse(pathX.begin(),pathX.end());
+					reverse(pathY.begin(),pathY.end());
 					/*while(!pathX.empty()){
 						cout<<pathX.back()<<endl;
 						pathX.pop_back();
@@ -1110,10 +1131,12 @@ int main(int argc, char *argv[]){
                     imshow("Linea",linea);
                     }
                     if(angled)ouch = false;
-                   	if(sel == 'd'){
-                   		//Aquí lo de la mira
-                   		//circle(currentImage, (Point)points[i], 5, Scalar( 0, 0, 255 ), FILLED);
-                   	}
+                    playAnimation = true;
+//                   	if(sel == 'c'){
+//                   	    animation();
+//                   		//Aquí lo de la mira
+//                   		//circle(currentImage, (Point)points[i], 5, Scalar( 0, 0, 255 ), FILLED);
+//                   	}
                 break;
                 // presionar e para capturar el angulo y
                 // luego p para dejar de capturarlo
