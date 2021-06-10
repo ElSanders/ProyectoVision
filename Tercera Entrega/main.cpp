@@ -137,22 +137,22 @@ bool identify(float fi1, float fi2){
     bool bLargeFigure;
 
     if(inBounds(fi1,minApplefi1,maxApplefi1) ){
-        //cout<<"Manzana reconocida"<<endl;
+        cout<<"Manzana reconocida"<<endl;
         small=1;
         bLargeFigure = false;
     }
     if(inBounds(fi1,minPearfi1,maxPearfi1) ){
-        //cout<<"Cereza reconocida"<<endl;
+        cout<<"Cereza reconocida"<<endl;
         small=2;
         bLargeFigure = false;
     }
     if(inBounds(fi1,minBanannafi1,maxBanannafi1) ){
-        //cout<<"Plátano reconocido"<<endl;
+        cout<<"Plátano reconocido"<<endl;
         big=1;
         bLargeFigure = true;
     }
     if(inBounds(fi1,minCarrotfi1,maxCarrotfi1) ){
-        //cout<<"Zanahoria reconocida"<<endl;
+        cout<<"Zanahoria reconocida"<<endl;
         big=2;
         bLargeFigure = true;
     }
@@ -626,8 +626,8 @@ void entranceMira() {
 void animation(){
 
     unsigned int microsecond = 100000;
-    cout << "tamaño del vector x: " << pathX.size() << endl;
-    cout << "tamaño del vector y: " << pathY.size() << endl;
+    //cout << "tamaño del vector x: " << pathX.size() << endl;
+    //cout << "tamaño del vector y: " << pathY.size() << endl;
 
     circle(animationImage, Point(pathX.back(), pathY.back()), 5, (0, 255, 255), FILLED);
     usleep(microsecond);//sleeps for 1 second
