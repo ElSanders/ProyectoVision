@@ -162,18 +162,22 @@ bool identify(float fi1, float fi2){
     int x, y ;
     if(debug)cout << "Valores de Small y Big SB -> " << small << big << "--------------------------"<< endl;
     if ((small == 1) && (big ==1)){ // manzana y platano
+        cout<<"Manzana y platano"<<endl;
         x = 365; y = 135;
         entrance = 2;
     }
     if ((small == 2) && (big ==1)){ // cherry y platano
+        cout<<"cherry y platano"<<endl;
         x = 365; y = 205;
         entrance = 4;
     }
     if ((small == 1) && (big ==2)){ // manzana y zanahoria
+        cout<<"manzana y zanahoria"<<endl;
         x = 285; y = 135;
         entrance = 1;
     }
     if ((small == 2) && (big ==2)){ // cherry y zanahoria
+        cout<<"Cherry y zanahoria"<<endl;
         x = 285; y = 205;
         entrance = 3;
     }
@@ -1209,6 +1213,28 @@ int main(int argc, char *argv[]){
                 // luego p para dejar de capturarlo
                 case 't':
                     sel = 'c';
+                    if (direction == 1){
+                        if (entrance == 1){
+                            currentImage = imread(("1_up.jpg"),IMREAD_COLOR);
+                        } else if (entrance == 2){
+                            currentImage = imread(("2_up.jpg"),IMREAD_COLOR);
+                        } else if (entrance == 3){
+                            currentImage = imread(("3_up.jpg"),IMREAD_COLOR);
+                        } else {
+                            currentImage = imread(("4_up.jpg"),IMREAD_COLOR);
+                        }
+                    } else {
+                        if (entrance == 1){
+                            currentImage = imread(("1_down.jpg"),IMREAD_COLOR);
+                        } else if (entrance == 2){
+                            currentImage = imread(("2_down.jpg"),IMREAD_COLOR);
+                        } else if (entrance == 3){
+                            currentImage = imread(("3_down.jpg"),IMREAD_COLOR);
+                        } else {
+                            currentImage = imread(("4_down.jpg"),IMREAD_COLOR);
+                        }
+                    }
+                                                          //currentImage = imread("parking2.jpg",IMREAD_COLOR);
                     destroyAllWindows();
                     break;
                 case 'x':
